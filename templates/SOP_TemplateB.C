@@ -67,6 +67,7 @@ SOP_TemplateB::cookMySop(OP_Context &context)
 
     duplicateSource(0, context);
 
+
     return error();
 }
 
