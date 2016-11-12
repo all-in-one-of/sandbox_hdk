@@ -25,6 +25,7 @@ private:
 	void buildTube();
 	void buildMetaBall();
 	void buildNurbsCurve();
+	void ListAttribs(const GA_AttributeOwner& owner);
 };
 
 #endif

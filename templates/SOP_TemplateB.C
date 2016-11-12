@@ -55,6 +55,20 @@ SOP_TemplateB::SOP_TemplateB(OP_Network *net, const char *name, OP_Operator *op)
 
 SOP_TemplateB::~SOP_TemplateB() {}
 
+void SOP_TemplateB::ListAttribs(const GA_AttributeOwner& owner) {
+	GA_AttributeDict detail_attrib_dict = gdp->getAttributeDict(owner);
+	for (auto it = detail_attrib_dict.begin(GA_AttributeScope::GA_SCOPE_PUBLIC);
+			it != detail_attrib_dict.end(GA_AttributeScope::GA_SCOPE_PUBLIC);
+			++it) {
+		std::cout << "----------" << std::endl;
+		std::cout << "Attribute Name : " << it.name() << std::endl;
+		auto attrib = it.attrib();
+		std::cout << "Attribute type : " << attrib->getType().getTypeName()
+				<< std::endl;
+		std::cout << "----------" << std::endl;
+	}
+}
+
 OP_ERROR
 SOP_TemplateB::cookMySop(OP_Context &context)
 {
@@ -67,7 +81,10 @@ SOP_TemplateB::cookMySop(OP_Context &context)
 
     duplicateSource(0, context);
 
-
+	std::cout << "=============GA_ATTRIB_VERTEX=============" << std::endl;
+	ListAttribs(GA_AttributeOwner::GA_ATTRIB_VERTEX);
+	std::cout << "=============GA_ATTRIB_POINT=============" << std::endl;
+	ListAttribs(GA_AttributeOwner::GA_ATTRIB_POINT);
     return error();
 }
 
