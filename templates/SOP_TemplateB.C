@@ -56,16 +56,18 @@ SOP_TemplateB::SOP_TemplateB(OP_Network *net, const char *name, OP_Operator *op)
 SOP_TemplateB::~SOP_TemplateB() {}
 
 void SOP_TemplateB::ListAttribs(const GA_AttributeOwner& owner) {
-	GA_AttributeDict detail_attrib_dict = gdp->getAttributeDict(owner);
-	for (auto it = detail_attrib_dict.begin(GA_AttributeScope::GA_SCOPE_PUBLIC);
-			it != detail_attrib_dict.end(GA_AttributeScope::GA_SCOPE_PUBLIC);
-			++it) {
+	GA_AttributeDict attrib_dict = gdp->getAttributeDict(owner);
+	for (auto it = attrib_dict.begin(GA_SCOPE_PUBLIC);
+			it != attrib_dict.end(GA_SCOPE_PUBLIC);
+			++it)
+	{
 		std::cout << "----------" << std::endl;
 		std::cout << "Attribute Name : " << it.name() << std::endl;
 		auto attrib = it.attrib();
 		std::cout << "Attribute type : " << attrib->getType().getTypeName()
 				<< std::endl;
 		std::cout << "----------" << std::endl;
+//		gdp->destroyAttribute(owner,it.name());
 	}
 }
 
@@ -85,6 +87,21 @@ SOP_TemplateB::cookMySop(OP_Context &context)
 	ListAttribs(GA_AttributeOwner::GA_ATTRIB_VERTEX);
 	std::cout << "=============GA_ATTRIB_POINT=============" << std::endl;
 	ListAttribs(GA_AttributeOwner::GA_ATTRIB_POINT);
+	std::cout << "=============GA_ATTRIB_PRIMITIVE=============" << std::endl;
+	ListAttribs(GA_AttributeOwner::GA_ATTRIB_PRIMITIVE);
+	std::cout << "=============GA_ATTRIB_DETAIL=============" << std::endl;
+	ListAttribs(GA_AttributeOwner::GA_ATTRIB_DETAIL);
+
+	GA_ROHandleF handle = GA_ROHandleF(gdp->findAttribute(GA_AttributeOwner::GA_ATTRIB_VERTEX,"vtx_attribA"));
+	GA_Offset ptoff;
+	std::cout << "vtx_attribA : ";
+	GA_FOR_ALL_PTOFF(gdp,ptoff)
+	{
+		std::cout << handle.get(ptoff) << "\t";
+	}
+	std::cout << std::endl;
+
+
     return error();
 }
 
