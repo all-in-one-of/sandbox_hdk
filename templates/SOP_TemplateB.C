@@ -71,6 +71,33 @@ void SOP_TemplateB::ListAttribs(const GA_AttributeOwner& owner) {
 	}
 }
 
+void SOP_TemplateB::createFloatTupleAndFillData() {
+	GA_Attribute* attrib = gdp->addFloatTuple(GA_ATTRIB_POINT,
+			"cusotm_attrib_a", 5);
+	GA_RWHandleF handle(attrib);
+	int count = 0;
+	for (GA_Iterator it(gdp->getPointRange()); !it.atEnd(); ++it) {
+		GA_Offset offset = *it;
+		for (int i = 0; i < 5; i++) {
+			handle.set(offset, i, count);
+			count++;
+		}
+	}
+}
+
+void SOP_TemplateB::findAttribAndReadData() {
+	GA_ROHandleF handle = GA_ROHandleF(
+			gdp->findAttribute(GA_AttributeOwner::GA_ATTRIB_VERTEX,
+					"vtx_attribA"));
+	GA_Offset ptoff;
+	std::cout << "vtx_attribA : ";
+	GA_FOR_ALL_PTOFF(gdp, ptoff)
+		GA_FOR_ALL_PTOFF(gdp, ptoff) {
+		std::cout << handle.get(ptoff) << "\t";
+	}
+	std::cout << std::endl;
+}
+
 OP_ERROR
 SOP_TemplateB::cookMySop(OP_Context &context)
 {
@@ -92,16 +119,8 @@ SOP_TemplateB::cookMySop(OP_Context &context)
 	std::cout << "=============GA_ATTRIB_DETAIL=============" << std::endl;
 	ListAttribs(GA_AttributeOwner::GA_ATTRIB_DETAIL);
 
-	GA_ROHandleF handle = GA_ROHandleF(gdp->findAttribute(GA_AttributeOwner::GA_ATTRIB_VERTEX,"vtx_attribA"));
-	GA_Offset ptoff;
-	std::cout << "vtx_attribA : ";
-	GA_FOR_ALL_PTOFF(gdp,ptoff)
-	{
-		std::cout << handle.get(ptoff) << "\t";
-	}
-	std::cout << std::endl;
-
-
+	findAttribAndReadData();
+	createFloatTupleAndFillData();
     return error();
 }
 

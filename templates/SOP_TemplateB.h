@@ -26,6 +26,8 @@ private:
 	void buildMetaBall();
 	void buildNurbsCurve();
 	void ListAttribs(const GA_AttributeOwner& owner);
+	void createFloatTupleAndFillData();
+	void findAttribAndReadData();
 };
 
 #endif
