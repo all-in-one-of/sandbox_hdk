@@ -98,6 +98,31 @@ void SOP_TemplateB::findAttribAndReadData() {
 	std::cout << std::endl;
 }
 
+void SOP_TemplateB::createStringTupleAndFillData() {
+	GA_Attribute* attrib = gdp->addStringTuple(GA_ATTRIB_POINT,
+			"cusotm_attrib_b", 2);
+	GA_RWHandleS handle(attrib);
+	for (GA_Iterator it(gdp->getPointRange()); !it.atEnd(); ++it) {
+		GA_Offset offset = *it;
+		for (int i = 0; i < 2; i++) {
+			handle.set(offset, i, "test");
+		}
+	}
+}
+
+void SOP_TemplateB::createGroupAndSetData() {
+	GA_ElementGroup* group = gdp->createElementGroup(GA_ATTRIB_POINT,
+			"custom_group_a");
+	int count = 0;
+	for (GA_Iterator it(gdp->getPointRange()); !it.atEnd(); ++it) {
+		GA_Offset offset = *it;
+		if (count % 3 == 0) {
+			group->setOffset(offset, true);
+		}
+		count++;
+	}
+}
+
 OP_ERROR
 SOP_TemplateB::cookMySop(OP_Context &context)
 {
@@ -121,6 +146,9 @@ SOP_TemplateB::cookMySop(OP_Context &context)
 
 	findAttribAndReadData();
 	createFloatTupleAndFillData();
+	createStringTupleAndFillData();
+	createGroupAndSetData();
+
     return error();
 }
 

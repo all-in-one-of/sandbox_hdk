@@ -28,6 +28,8 @@ private:
 	void ListAttribs(const GA_AttributeOwner& owner);
 	void createFloatTupleAndFillData();
 	void findAttribAndReadData();
+	void createStringTupleAndFillData();
+	void createGroupAndSetData();
 };
 
 #endif
