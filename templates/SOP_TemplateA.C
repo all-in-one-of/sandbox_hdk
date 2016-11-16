@@ -20,6 +20,8 @@
 #include <GU/GU_PrimTube.h>
 #include <GU/GU_PrimMetaBall.h>
 #include <GU/GU_PrimNURBCurve.h>
+#include <GU/GU_PrimPacked.h>
+#include "GU_PackedSphere.h"
 
 void
 newSopOperator(OP_OperatorTable *table)
@@ -124,6 +126,8 @@ SOP_TemplateA::cookMySop(OP_Context &context)
 	buildTube();
 	buildMetaBall();
 	buildNurbsCurve();
+
+	GU_PrimPacked	*pack = GU_PrimPacked::build(*gdp, "PackedSphere");
 
     return error();
 }
