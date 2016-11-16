@@ -25,6 +25,8 @@ private:
 	void buildTube();
 	void buildMetaBall();
 	void buildNurbsCurve();
+	GU_Detail* packedGdp;
+	GU_DetailHandle* packedGdpHandle;
 };
 
 #endif

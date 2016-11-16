@@ -21,6 +21,7 @@
 #include <GU/GU_PrimMetaBall.h>
 #include <GU/GU_PrimNURBCurve.h>
 #include <GU/GU_PrimPacked.h>
+#include <GU/GU_PackedGeometry.h>
 #include "GU_PackedSphere.h"
 
 void
@@ -53,19 +54,28 @@ SOP_TemplateA::SOP_TemplateA(OP_Network *net, const char *name, OP_Operator *op)
 //    mySopFlags.setManagesDataIDs(true);
 
     mySopFlags.setNeedGuide1(false);
+
+    packedGdp = new GU_Detail();
+    packedGdp->clearAndDestroy();
+    packedGdpHandle = new GU_DetailHandle();
+    packedGdpHandle->allocateAndSet(packedGdp);
 }
 
-SOP_TemplateA::~SOP_TemplateA() {}
+SOP_TemplateA::~SOP_TemplateA()
+{
+	delete packedGdp;
+	delete packedGdpHandle;
+}
 
 void SOP_TemplateA::buildPolygon() {
-	GEO_PrimPoly* poly = GU_PrimPoly::build(gdp, 3, false, true);
+	GEO_PrimPoly* poly = GU_PrimPoly::build(packedGdp, 3, false, true);
 	GA_Offset poffset;
 	poffset = poly->getPointOffset(0);
-	gdp->setPos3(poffset, UT_Vector3(1, 0, 0));
+	packedGdp->setPos3(poffset, UT_Vector3(1, 0, 0));
 	poffset = poly->getPointOffset(1);
-	gdp->setPos3(poffset, UT_Vector3(0, 1, 0));
+	packedGdp->setPos3(poffset, UT_Vector3(0, 1, 0));
 	poffset = poly->getPointOffset(2);
-	gdp->setPos3(poffset, UT_Vector3(0, 0, 1));
+	packedGdp->setPos3(poffset, UT_Vector3(0, 0, 1));
 
 	UT_Matrix3 mat;
 	mat.identity();
@@ -122,12 +132,14 @@ SOP_TemplateA::cookMySop(OP_Context &context)
 //    duplicateSource(0, context);
     gdp->clearAndDestroy();
 
+
 	buildPolygon();
 	buildTube();
 	buildMetaBall();
 	buildNurbsCurve();
 
 	GU_PrimPacked	*pack = GU_PrimPacked::build(*gdp, "PackedSphere");
+	GU_PackedGeometry::packGeometry(*gdp, *packedGdpHandle);
 
     return error();
 }
