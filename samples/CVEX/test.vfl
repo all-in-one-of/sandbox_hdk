@@ -1,0 +1,24 @@
+void
+testBound(string name)
+{
+    if (isbound(name))
+	printf("%s is bound\n", name);
+    else
+	printf("%s is not bound\n", name);
+}
+
+cvex
+test(
+    vector P=0;
+    int unbound = 3;
+    export float s=0;
+    export vector Cf=0;
+)
+{
+    testBound("P");
+    testBound("unbound");
+
+    printf("s=%g P=%g unbound=%d\n", s, P, unbound);
+    Cf = noise(P*10);
+    s *= 2;
+}

@@ -1,0 +1,6 @@
+// CVEX example VEX code
+cvex
+simple(vector P=0; export float len=0)
+{
+    len = length(P);
+}

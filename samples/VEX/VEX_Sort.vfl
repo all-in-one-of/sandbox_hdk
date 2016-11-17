@@ -1,0 +1,96 @@
+/*
+ * Copyright (c) 2015
+ *	Side Effects Software Inc.  All rights reserved.
+ *
+ * Redistribution and use of Houdini Development Kit samples in source and
+ * binary forms, with or without modification, are permitted provided that the
+ * following conditions are met:
+ * 1. Redistributions of source code must retain the above copyright notice,
+ *    this list of conditions and the following disclaimer.
+ * 2. The name of Side Effects Software may not be used to endorse or
+ *    promote products derived from this software without specific prior
+ *    written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY SIDE EFFECTS SOFTWARE `AS IS' AND ANY EXPRESS
+ * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN
+ * NO EVENT SHALL SIDE EFFECTS SOFTWARE BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA,
+ * OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ *----------------------------------------------------------------------------
+ * This file shows how the hdksort() VEX functions can be used.
+ */
+
+cvex VEX_Sort()
+{
+    int		a[];
+    float	b[];
+    string	c[];
+    vector	d[];
+    vector4	e[];
+    matrix3	f[];
+    matrix	g[];
+    string	c2[];
+    
+    a[0] = 3;
+    a[1] = 2;
+    a[2] = 0;
+    a[3] = 1;
+
+    b[0] = 3;
+    b[1] = 2;
+    b[2] = 0;
+    b[3] = 1;
+
+    c[0] = "d";
+    c[1] = "c";
+    c[2] = "a";
+    c[3] = "b";
+
+    d[0] = (vector)3;
+    d[1] = (vector)2;
+    d[2] = (vector)0;
+    d[3] = (vector)1;
+
+    e[0] = (vector4)3;
+    e[1] = (vector4)2;
+    e[2] = (vector4)0;
+    e[3] = (vector4)1;
+
+    f[0] = (matrix3)3;
+    f[1] = (matrix3)2;
+    f[2] = (matrix3)0;
+    f[3] = (matrix3)1;
+
+    g[0] = (matrix)3;
+    g[1] = (matrix)2;
+    g[2] = (matrix)0;
+    g[3] = (matrix)1;
+
+    hdksort(a);
+    hdksort(b);
+    hdksort(c);
+    hdksort(d);
+    hdksort(e);
+    hdksort(f);
+    hdksort(g);
+
+    hdksort(a);
+    hdksort(b);
+    hdksort(c);
+    hdksort(d);
+    hdksort(e);
+    hdksort(f);
+    hdksort(g);
+
+    printf("%g\n%g\n%g\n%g\n%g\n%g\n%g\n", a, b, c, d, e, f, g);
+
+    c2 = hdkdecimate(c);
+
+    printf("%g\n", c2);
+}

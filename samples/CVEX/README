@@ -1,0 +1,2 @@
+This directory contains a simple example of how to call VEX (through
+the CVEX context) from within a C application.

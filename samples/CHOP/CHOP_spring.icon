@@ -1,0 +1,29 @@
+
+#	Path_0
+		color(outlinecolor);
+		bgnline();
+			vertex(50.00, 30.00);
+			vertex(50.00, 35.00);
+			vertex(35.00, 42.50);
+			vertex(65.00, 57.50);
+			vertex(35.00, 67.50);
+			vertex(65.00, 82.50);
+			vertex(50.00, 90.00);
+			vertex(50.00, 95.00);
+		endline();
+
+#	Path_1
+		color(-136);
+		bgnoutlinepolygon();
+			vertex(30.00, 30.00);
+			vertex(30.00, 5.00);
+			vertex(70.00, 5.00);
+			vertex(70.00, 30.00);
+		endoutlinepolygon(outlinecolor);
+
+#	Path_2
+		color(outlinecolor);
+		bgnline();
+			vertex(70.00, 95.00);
+			vertex(30.00, 95.00);
+		endline();
