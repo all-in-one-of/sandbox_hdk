@@ -23,6 +23,8 @@
 #include <GU/GU_PrimPacked.h>
 #include <GU/GU_PackedGeometry.h>
 
+#include <GU/GU_Smooth.h>
+
 void
 newSopOperator(OP_OperatorTable *table)
 {
@@ -36,8 +38,17 @@ newSopOperator(OP_OperatorTable *table)
         NULL));
 }
 
+static PRM_Name names[] = {
+	PRM_Name("attribute_name", "Attribute Name"),
+    PRM_Name("frequency", "Cut-off Frequency"),
+    PRM_Name("iterations","Smoothing Iterations"),
+};
+
 PRM_Template
 SOP_Laplacian_Smooth::myTemplateList[] = {
+	    PRM_Template(PRM_STRING,1, &names[0]),
+	    PRM_Template(PRM_FLT_J,	1, &names[1], PRMpointOneDefaults, 0,&PRMunitRange),
+		PRM_Template(PRM_INT_J,	1, &names[2], PRMoneDefaults, 0,&PRMnonNegativeRange),
     PRM_Template(),
 };
 
@@ -68,6 +79,11 @@ SOP_Laplacian_Smooth::cookMySop(OP_Context &context)
 
     duplicateSource(0, context);
 //    gdp->clearAndDestroy();
+
+    UT_String attrib_name; ATTRIB_NAME(attrib_name);
+    GA_Attribute* attrib = gdp->findAttribute(GA_ATTRIB_POINT,attrib_name);
+    if(attrib)
+    	GUsmooth(attrib,FREQUENCY(0),INTERATIONS(0));
 
     return error();
 }
