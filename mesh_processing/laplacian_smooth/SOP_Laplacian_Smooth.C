@@ -67,105 +67,13 @@ SOP_Laplacian_Smooth::myTemplateList[] = {
     PRM_Template(PRM_TOGGLE, 1, &names[1], PRMzeroDefaults),
     PRM_Template(PRM_TOGGLE, 1, &names[2], PRMzeroDefaults),
     PRM_Template(PRM_STRING, 1, &names[3], 0),
-    PRM_Template(PRM_FLT_J,  1, &names[4], PRMzeroDefaults, 0, &laplaceRange),
+    PRM_Template(PRM_FLT_J,  1, &names[4], PRMzeroDefaults, 0),
     PRM_Template(PRM_TOGGLE, 1, &names[5], PRMzeroDefaults),
     PRM_Template(),
 };
 
-namespace SOP_IGL {
-void compute_curvature(GU_Detail *gdp, Eigen::MatrixXd &V, Eigen::MatrixXi &F, const int false_colors=0)
+namespace SOP_IGL
 {
-    // Alternative discrete mean curvature
-    Eigen::MatrixXd HN;
-    Eigen::SparseMatrix<double> L,M,Minv;
-    igl::cotmatrix(V,F,L);
-    igl::massmatrix(V,F,igl::MASSMATRIX_TYPE_VORONOI,M);
-    igl::invert_diag(M,Minv);
-    // Laplace-Beltrami of position
-    HN = -Minv*(L*V);
-    // Extract magnitude as mean curvature
-    Eigen::VectorXd H = HN.rowwise().norm();
-
-    // Compute curvature directions via quadric fitting
-    Eigen::MatrixXd PD1,PD2;
-    Eigen::VectorXd PV1,PV2;
-    igl::principal_curvature(V,F,PD1,PD2,PV1,PV2);
-    // mean curvature
-    H = 0.5*(PV1+PV2);
-
-
-    GA_RWHandleF      curvature_h(gdp->addFloatTuple(GA_ATTRIB_POINT, "curvature", 1));
-    GA_RWHandleV3     tangentu_h(gdp->addFloatTuple(GA_ATTRIB_POINT, "tangentu", 3));
-    GA_RWHandleV3     tangentv_h(gdp->addFloatTuple(GA_ATTRIB_POINT, "tangentv", 3));
-
-    GA_Offset ptoff;
-    if (curvature_h.isValid() && tangentu_h.isValid() && tangentv_h.isValid()) {
-        GA_FOR_ALL_PTOFF(gdp, ptoff) {
-            const GA_Index ptidx = gdp->pointIndex(ptoff);
-            UT_ASSERT((uint)ptidx < H.rows());
-            UT_ASSERT((uint)ptidx < PD1.rows());
-            UT_ASSERT((uint)ptidx < PD2.rows());
-            const float curv = H((uint)ptidx, 0);
-            const UT_Vector3 tnu(PD1((uint)ptidx, 0), PD1((uint)ptidx, 1), PD1((uint)ptidx, 2));
-            const UT_Vector3 tnv(PD2((uint)ptidx, 0), PD2((uint)ptidx, 1), PD2((uint)ptidx, 2));
-            curvature_h.set(ptoff, curv);
-            tangentu_h.set(ptoff, tnu);
-            tangentv_h.set(ptoff, tnv);
-        }
-    }
-
-    if (false_colors) {
-        // Pseudo Colors:
-        Eigen::MatrixXd C;
-        igl::parula(H,true,C);
-        GA_RWHandleV3   color_h(gdp->addFloatTuple(GA_ATTRIB_POINT, "Cd", 3));
-        GA_FOR_ALL_PTOFF(gdp, ptoff) {
-            const GA_Index ptidx = gdp->pointIndex(ptoff);
-            UT_ASSERT((uint)ptidx < C.rows());
-            const UT_Vector3 cd(C((uint)ptidx, 0), C((uint)ptidx, 1), C((uint)ptidx, 2));
-            color_h.set(ptoff, cd);
-        }
-    }
-}
-
-void compute_gradient(GU_Detail *gdp, const GA_ROHandleF &sourceAttrib, Eigen::MatrixXd &V, Eigen::MatrixXi &F)
-{
-    const uint numPoints = gdp->getNumPoints();
-    Eigen::VectorXd U(numPoints);
-    GA_Offset ptoff;
-    GA_FOR_ALL_PTOFF(gdp, ptoff) {
-        const float val      = sourceAttrib.get(ptoff);
-        const GA_Index ptidx = gdp->pointIndex(ptoff);
-        U((uint)ptidx) = val;
-    }
-
-    // Compute gradient operator: #F*3 by #V
-    Eigen::SparseMatrix<double> G;
-    igl::grad(V,F,G);
-
-    // Compute gradient of U
-    Eigen::MatrixXd GU = Eigen::Map<const Eigen::MatrixXd>((G*U).eval().data(),F.rows(),3);
-    // Compute gradient magnitude
-    const Eigen::VectorXd GU_mag = GU.rowwise().norm();
-
-
-    // Copy attributes to Houdini
-    {
-        GA_RWHandleV3  gradAttrib_h(gdp->addFloatTuple(GA_ATTRIB_POINT, "gradientAttrib", 3));
-        GA_Offset ptoff;
-        GA_FOR_ALL_PTOFF(gdp, ptoff) {
-            const GA_Index ptidx = gdp->pointIndex(ptoff);
-            UT_ASSERT((uint)ptidx < GU_mag.rows());
-            UT_ASSERT((uint)ptidx < GU.rows());
-            UT_Vector3 grad(GU((uint)ptidx, 0),  GU((uint)ptidx, 1), GU((uint)ptidx, 2));
-            const float gmag = GU_mag((uint)ptidx, 0);
-            grad *= gmag;
-            grad.normalize();//?
-            gradAttrib_h.set(ptoff, grad);
-        }
-    }
-}
-
 int compute_laplacian(const Eigen::MatrixXd &V, const Eigen::MatrixXi &F,
                       const Eigen::SparseMatrix<double> &L, Eigen::MatrixXd &U)
 {
@@ -181,12 +89,7 @@ int compute_laplacian(const Eigen::MatrixXd &V, const Eigen::MatrixXi &F,
     U = solver.solve(M*U).eval();
     return Eigen::Success;
 }
-
 } // end of SOP_IGL namespce
-
-
-
-
 
 OP_Node *
 SOP_Laplacian_Smooth::myConstructor(OP_Network *net, const char *name, OP_Operator *op)
@@ -223,42 +126,17 @@ SOP_Laplacian_Smooth::cookMySop(OP_Context &context)
 
     SOP_IGL::detail_to_eigen(*gdp, V, F);
 
-    /* Curvature */
-    if(CURVATURE(t))
-    {
-        SOP_IGL::compute_curvature(gdp, V, F, FALSE_CURVE_COLORS(t));
-    }
-
-    /* Gradient of an attribute */
-    if (GRAD_ATTRIB(t))
-    {
-
-        // Fetch our attribute names
-        UT_String sourceGradAttribName;
-        GRAD_ATTRIB_NAME(sourceGradAttribName);
-
-        if (!sourceGradAttribName.isstring())
-            return error();
-
-        // Make sure a name is valid.
-        sourceGradAttribName.forceValidVariableName();
-        GA_ROHandleF  sourceGradAttrib_h(gdp->findAttribute(GA_ATTRIB_POINT, sourceGradAttribName));
-        if (sourceGradAttrib_h.isValid()) {
-            SOP_IGL::compute_gradient(gdp, sourceGradAttrib_h, V, F);
-        } else {
-            addWarning(SOP_MESSAGE, "Can't compute a gradient from a given attribute.");
-        }
-    }
-
-
     /*    Laplacian smoothing   */
     const float laplacian = LAPLACIAN(t);
+    std::cout << "+++++++++++ laplacian : " << laplacian << std::endl;
 
     if (laplacian != 0)
     {
-        int laplacian_iterations = (int)ceil(laplacian);
+        int laplacian_iterations = (int)ceil(laplacian)+1;
+        std::cout << "+++++++++++ laplacian_iterations : " << laplacian_iterations << std::endl;
         float laplacian_ratio    = laplacian - floorf(laplacian);
         laplacian_ratio = laplacian_ratio != 0.f ? laplacian_ratio : 1.f;
+        std::cout << "+++++++++++ laplacian_ratio : " << laplacian_ratio << std::endl;
 
         // Start the interrupt server
         UT_AutoInterrupt boss("Laplacian smoothing...");
@@ -280,13 +158,21 @@ SOP_Laplacian_Smooth::cookMySop(OP_Context &context)
                 addWarning(SOP_MESSAGE, "Can't compute laplacian with current geometry.");
                 return error();
             }
+
             laplacian_iterations--;
 
-            // if (laplacian_iterations > 0)
-            //     T += (U - T);
-            // else
-            //     T += (U - T) * laplacian_ratio;
-            T = U;
+             if (laplacian_iterations > 0)
+             {
+                 T += (U - T);
+                 std::cout << "++++++++++++ IF" << std::endl;
+             }
+             else
+             {
+                 T += (U - T) * laplacian_ratio;
+                 std::cout << "++++++++++++ ELSE" << std::endl;
+             }
+
+//            T = U;
         }
 
         // Copy back to Houdini:
@@ -303,31 +189,6 @@ SOP_Laplacian_Smooth::cookMySop(OP_Context &context)
             }
         }
     }
-
-    // This won't compile with Eigen > 3.2.8
-    #if 0
-     /*  Eigen decompositon*/
-    if (EIGENVECTORS(t))
-    {
-        igl::cotmatrix(V,F,L);
-        L = (-L).eval();
-
-        igl::massmatrix(V, F, igl::MASSMATRIX_TYPE_DEFAULT, M);
-
-        const size_t k = 5;
-        Eigen::VectorXd D;
-        Eigen::MatrixXd U;
-        if(!igl::eigs(L, M, k+1, igl::EIGS_TYPE_SM, U, D)) {
-            addWarning(SOP_MESSAGE, "Can't compute eigen decomposition.");
-            return error();
-        }
-
-        U = ((U.array()-U.minCoeff())/(U.maxCoeff()-U.minCoeff())).eval();
-
-        //....
-    }
-
-    #endif
 
     gdp->getP()->bumpDataId();
     return error();
