@@ -28,6 +28,7 @@
 #include "converters.hpp"
 
 #include <igl/cotmatrix.h>
+#include <igl/barycenter.h>
 #include <igl/invert_diag.h>
 #include <igl/massmatrix.h>
 #include <igl/principal_curvature.h>
@@ -87,6 +88,20 @@ int compute_laplacian(const Eigen::MatrixXd &V, const Eigen::MatrixXi &F,
     if(solver.info() != Eigen::Success)
       return solver.info();
     U = solver.solve(M*U).eval();
+    // Compute centroid and subtract (also important for numerics)
+    Eigen::VectorXd dblA;
+    igl::doublearea(U,F,dblA);
+    double area = 0.5*dblA.sum();
+    Eigen::MatrixXd BC;
+    igl::barycenter(U,F,BC);
+    Eigen::RowVector3d centroid(0,0,0);
+    for(int i = 0;i<BC.rows();i++)
+    {
+      centroid += 0.5*dblA(i)/area*BC.row(i);
+    }
+    U.rowwise() -= centroid;
+//    // Normalize to unit surface area (important for numerics)
+//    U.array() /= sqrt(area);
     return Eigen::Success;
 }
 } // end of SOP_IGL namespce
