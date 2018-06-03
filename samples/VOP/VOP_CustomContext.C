@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015
+ * Copyright (c) 2017
  *	Side Effects Software Inc.  All rights reserved.
  *
  * Redistribution and use of Houdini Development Kit samples in source and
@@ -36,6 +36,7 @@
 #include <UT/UT_WorkBuffer.h>
 #include <SYS/SYS_Types.h>
 
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -58,12 +59,14 @@ newSopOperator(OP_OperatorTable *table)
 		"Custom VOP",			    // UI label
 		SOP_CustomVop::myConstructor,	    // class factory
 		SOP_CustomVop::myTemplateList,	    // parm definitions
+		SOP_CustomVop::theChildTableName,
 		0,				    // min # of inputs
 		0 				    // max # of inputs
 		);
     table->addOperator(op);
 }
 
+const char *SOP_CustomVop::theChildTableName = VOP_TABLE_NAME;
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -87,8 +90,7 @@ SOP_CustomVop::SOP_CustomVop(
 	OP_Network *net, const char *name, OP_Operator *entry)
     : SOP_Node(net, name, entry)
 {
-    // Specify the set of allowed operator types for our child nodes.
-    setOperatorTable(createAndGetOperatorTable());
+    createAndGetOperatorTable();
 }
 
 SOP_CustomVop::~SOP_CustomVop()
@@ -121,6 +123,7 @@ public:
 		label,				// UI label
 		VOP_CustomVop::myConstructor,   // How to create one
 		VOP_CustomVop::myTemplateList,  // parm definitions
+		SOP_CustomVop::theChildTableName,
 		0,				// Min # of inputs
 		VOP_VARIABLE_INOUT_MAX,		// Max # of inputs
 		"invalid",			// vopnet mask
@@ -363,7 +366,7 @@ VOP_CustomVop::nodeEventHandler(
     switch (type)
     {
 	case OP_PARM_CHANGED:
-	    static_cast<VOP_CustomVop*>(callee)->handleParmChanged(long(data));
+	    static_cast<VOP_CustomVop*>(callee)->handleParmChanged((int)(intptr_t)data);
 	    break;
 	default:
 	    break;

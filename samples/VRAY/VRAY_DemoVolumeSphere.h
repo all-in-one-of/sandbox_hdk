@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015
+ * Copyright (c) 2017
  *	Side Effects Software Inc.  All rights reserved.
  *
  * Redistribution and use of Houdini Development Kit samples in source and
@@ -36,7 +36,8 @@
 namespace HDK_Sample {
 
 /// Example of a custom volume primitive
-class VRAY_DemoVolumeSphere : public VRAY_Procedural {
+class VRAY_DemoVolumeSphere : public VRAY_Procedural
+{
 public:
 	     VRAY_DemoVolumeSphere();
     virtual ~VRAY_DemoVolumeSphere();
@@ -57,4 +58,3 @@ private:
 }	// End HDK_Sample namespace
 
 #endif
-

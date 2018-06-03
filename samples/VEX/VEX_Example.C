@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015
+ * Copyright (c) 2017
  *	Side Effects Software Inc.  All rights reserved.
  *
  * Redistribution and use of Houdini Development Kit samples in source and
@@ -35,14 +35,16 @@
 #include <UT/UT_Thread.h>
 #include <VEX/VEX_VexOp.h>
 
+using namespace UT::Literal;
+
 namespace HDK_Sample {
 
 #if !defined(WIN32)
 static void
 drand_Evaluate(int, void *argv[], void *)
 {
-    float	*result = (float *)argv[0];
-    const int	*seed = (const int *)argv[1];
+    VEXfloat		*result = (VEXfloat *)argv[0];
+    const VEXint	*seed = (const VEXint *)argv[1];
 
     SYSsrand48(*seed);
     *result = SYSdrand48();
@@ -52,7 +54,7 @@ drand_Evaluate(int, void *argv[], void *)
 static void
 time_Evaluate(int, void *argv[], void *)
 {
-    int		*result = (int *)argv[0];
+    VEXint		*result = (VEXint *)argv[0];
 
     *result = time(0);
 }
@@ -64,7 +66,7 @@ public:
      gamma_Table() : myRefCount(1) { }
     ~gamma_Table() { }
 
-    float	evaluate(float v)	{ return 0; }
+    VEXfloat	evaluate(VEXfloat v)	{ return 0; }
 
     int		myRefCount;
 };
@@ -99,8 +101,8 @@ gamma_Cleanup(void *data)
 static void
 gamma_Evaluate(int, void *argv[], void *data)
 {
-    float	*result = (float *)argv[0];
-    const float	*value = (const float *)argv[1];
+    VEXfloat		*result = (VEXfloat *)argv[0];
+    const VEXfloat	*value = (const VEXfloat *)argv[1];
 
     gamma_Table	*table = (gamma_Table *)data;
     *result = table->evaluate(*value);
@@ -117,10 +119,10 @@ myprint_Evaluate(int argc, VEX_VexOpArg argv[], void *data)
 	switch (argv[i].myType)
 	{
 	    case VEX_TYPE_INTEGER:
-		printf("  int %d\n", *(const int *)argv[i].myArg);
+		printf("  int %d\n", *(const VEXint *)argv[i].myArg);
 		break;
 	    case VEX_TYPE_FLOAT:
-		printf("  float %f\n", *(const float *)argv[i].myArg);
+		printf("  float %f\n", *(const VEXfloat *)argv[i].myArg);
 		break;
 	    case VEX_TYPE_STRING:
 		printf("  string %s\n", (const char *)argv[i].myArg);
@@ -142,7 +144,7 @@ newVEXOp(void *)
 {
 #if !defined(WIN32)
     //	Returns a random number based on the seed argument
-    new VEX_VexOp("drand@&FI",		// Signature
+    new VEX_VexOp("drand@&FI"_sh,	// Signature
 		drand_Evaluate,		// Evaluator
 		VEX_ALL_CONTEXT,	// Context mask
 		NULL,			// init function
@@ -151,7 +153,7 @@ newVEXOp(void *)
 
     // Return the time() function.  This is non-deterministic, so the
     // optimization level has to be lowered.
-    new VEX_VexOp("time@&I",		// Signature
+    new VEX_VexOp("time@&I"_sh,		// Signature
 		time_Evaluate,		// Evaluator
 		VEX_ALL_CONTEXT,	// Context mask
 		NULL,			// init function
@@ -159,14 +161,14 @@ newVEXOp(void *)
 		VEX_OPTIMIZE_1);	// Optimization level
 
     // Use the default optimization (better performance)
-    new VEX_VexOp("gamma@&FF",		// Signature
+    new VEX_VexOp("gamma@&FF"_sh,		// Signature
 		gamma_Evaluate,		// Evaluator
 		VEX_ALL_CONTEXT,	// Context mask
 		gamma_Init,		// init function
 		gamma_Cleanup);		// Cleanup function
 
     // A variadic function to print integers and floats
-    new VEX_VexOp("myprint@+",		// Signature
+    new VEX_VexOp("myprint@+"_sh,		// Signature
 		myprint_Evaluate,	// Evaluator
 		VEX_ALL_CONTEXT,	// Context mask
 		NULL,			// init function

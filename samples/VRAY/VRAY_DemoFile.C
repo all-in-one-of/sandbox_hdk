@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015
+ * Copyright (c) 2017
  *	Side Effects Software Inc.  All rights reserved.
  *
  * Redistribution and use of Houdini Development Kit samples in source and
@@ -29,6 +29,7 @@
 #include <UT/UT_DSOVersion.h>
 #include <GU/GU_Detail.h>
 #include "VRAY_DemoFile.h"
+#include <VRAY/VRAY_ProceduralFactory.h>
 
 using namespace HDK_Sample;
 
@@ -40,16 +41,21 @@ static VRAY_ProceduralArg	theArgs[] = {
     VRAY_ProceduralArg()
 };
 
-VRAY_Procedural *
-allocProcedural(const char *)
+class ProcDef : public VRAY_ProceduralFactory::ProcDefinition
 {
-    return new VRAY_DemoFile();
-}
+public:
+    ProcDef()
+	: VRAY_ProceduralFactory::ProcDefinition("demofile")
+    {
+    }
+    virtual VRAY_Procedural	*create() const { return new VRAY_DemoFile(); }
+    virtual VRAY_ProceduralArg	*arguments() const { return theArgs; }
+};
 
-const VRAY_ProceduralArg *
-getProceduralArgs(const char *)
+void
+registerProcedural(VRAY_ProceduralFactory *factory)
 {
-    return theArgs;
+    factory->insert(new ProcDef);
 }
 
 VRAY_DemoFile::VRAY_DemoFile()
@@ -149,8 +155,9 @@ VRAY_DemoFile::render()
 	// Otherwise, we check to see if there's a motion blur geometry file
 	if (myBlurFile.isstring())
 	{
-	    VRAY_ProceduralGeo	g1 = g0.appendSegmentGeometry(myShutter);
-	    if (!g1->load(myBlurFile, 0).success())
+	    auto	g1 = g0.appendSegmentGeometry(myShutter);
+	    GU_DetailHandleAutoWriteLock	wlock(g1);
+	    if (!wlock.getGdp()->load(myBlurFile, 0).success())
 	    {
 		fprintf(stderr, "Unable to load geometry[1]: '%s'\n",
 			myBlurFile.c_str());

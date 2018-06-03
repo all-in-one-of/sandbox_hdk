@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015
+ * Copyright (c) 2017
  *	Side Effects Software Inc.  All rights reserved.
  *
  * Redistribution and use of Houdini Development Kit samples in source and
@@ -27,8 +27,6 @@
 
 // Collate everything into one .C file for hcustom.
 
-#define _HDF5USEDLL_ 1
-#define HDF5CPP_USEDLL 1
 #if defined( WIN32 ) 
     #define OPENEXR_DLL 1
 #endif

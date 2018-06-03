@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="35.2778mm" height="35.2778mm"
+ viewBox="0 0 100 100"
+ xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"  version="1.2" baseProfile="tiny">
+<title>CHOP_blend.icon</title>
+<desc>Generated with Qt</desc>
+<defs>
+</defs>
+<g fill="none" stroke="black" stroke-width="1" fill-rule="evenodd" stroke-linecap="square" stroke-linejoin="bevel" >
+
+<g fill="none" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,0,0)"
+font-family="MS Shell Dlg 2" font-size="8.25" font-weight="400" font-style="normal" 
+>
+</g>
+
+<g fill="#7f7f7f" fill-opacity="1" stroke="#7f7f7f" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,0,0)"
+font-family="MS Shell Dlg 2" font-size="8.25" font-weight="400" font-style="normal" 
+>
+<path vector-effect="non-scaling-stroke" fill-rule="evenodd" d="M4.8,30.2 L5,44.8 L87.8,44.7 L87.6,30.1 L4.8,30.2"/>
+<path vector-effect="non-scaling-stroke" fill-rule="evenodd" d="M5,7.5 L5.2,20.91 L35.2,20.91 L35,7.5 L5,7.5"/>
+</g>
+
+<g fill="#cccccc" fill-opacity="1" stroke="#cccccc" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,0,0)"
+font-family="MS Shell Dlg 2" font-size="8.25" font-weight="400" font-style="normal" 
+>
+<polyline fill="none" vector-effect="non-scaling-stroke" points="93.49,20.93 89.59,14.55 85.69,8.17 81.95,8.08 77.89,12.42 73.99,14.55 70.09,8.17 66.19,6.04 62.3,8.17 58.4,14.55 54.5,20.93 46.7,20.93 38.9,12.42 31.1,12.42 23.3,16.68 " />
+<polyline fill="none" vector-effect="non-scaling-stroke" points="92.5,39.15 91.09,34.12 87.19,36.25 84.07,40.51 81.42,41.87 75.49,42.64 71.59,40.51 71.59,36.25 71.59,32 66.6,32.68 63.79,36.25 60.52,40.68 56,44.76 52.1,38.38 48.2,32 48.2,36.25 44.3,42.64 40.4,44.76 36.5,38.38 32.6,32 28.7,38.38 20.9,42.64 " />
+</g>
+
+<g fill="#0000ff" fill-opacity="1" stroke="#0000ff" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,0,0)"
+font-family="MS Shell Dlg 2" font-size="8.25" font-weight="400" font-style="normal" 
+>
+<polyline fill="none" vector-effect="non-scaling-stroke" points="85,77.5 82.2,77.8 77,77.2 70,75 65,72.5 61.6,68 57.4,68 51,72.2 48,78 40,80 35,77.5 30,75 22.4,72.6 14.8,75 " />
+</g>
+
+<g fill="#cccccc" fill-opacity="1" stroke="#cccccc" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,0,0)"
+font-family="MS Shell Dlg 2" font-size="8.25" font-weight="400" font-style="normal" 
+>
+<polyline fill="none" vector-effect="non-scaling-stroke" points="5,57.5 5,2.5 " />
+</g>
+</g>
+</svg>

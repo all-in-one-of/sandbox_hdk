@@ -372,34 +372,11 @@ void
 GUI_PrimVolumeVelField::render(RE_Render	      *r,
 			       GR_RenderMode	       render_mode,
 			       GR_RenderFlags	       flags,
-			       const GR_DisplayOption *opt,
-			       const RE_MaterialList  *materials)
+			       GR_DrawParms	       dp)
 {
-    if(myField)
-	drawField(r, render_mode, flags, opt, materials, -1);
-}
-
-void
-GUI_PrimVolumeVelField::renderInstances(RE_Render	       *r,
-					GR_RenderMode		render_mode,
-					GR_RenderFlags		flags,
-					const GR_DisplayOption *opt,
-					const RE_MaterialList  *materials,
-					int instance_group)
-{
-    if(myField)
-	drawField(r, render_mode, flags, opt, materials, instance_group);
-}
-
-
-void
-GUI_PrimVolumeVelField::drawField(RE_Render	        *r,
-				  GR_RenderMode		 render_mode,
-				  GR_RenderFlags	 flags,
-				  const GR_DisplayOption *opt,
-				  const RE_MaterialList  *materials,
-				  int			 instance_group)
-{
+    if(!myField)
+	return;
+    
     if(render_mode == GR_RENDER_BEAUTY ||
        render_mode == GR_RENDER_MATERIAL_WIREFRAME ||
        render_mode == GR_RENDER_WIREFRAME ||
@@ -411,8 +388,8 @@ GUI_PrimVolumeVelField::drawField(RE_Render	        *r,
 	// $HH/glsl/basic/GL32/const_color.prog
 	r->pushShader(GR_Utils::getColorShader(r));
 
-	if(instance_group >= 0)
-	    myField->drawInstanceGroup(r, LINE_DRAW_GROUP, instance_group);
+	if(dp.draw_instanced)
+	    myField->drawInstanceGroup(r, LINE_DRAW_GROUP, dp.instance_group);
 	else
 	    myField->draw(r, LINE_DRAW_GROUP);
 
@@ -423,7 +400,7 @@ GUI_PrimVolumeVelField::drawField(RE_Render	        *r,
 	{
 	    fpreal32 col[4];
 
-	    opt->common().selPrimColor().getRGB(col,col+1,col+2);
+	    dp.opts->common().selPrimColor().getRGB(col,col+1,col+2);
 	    col[3] = 1.0;
 
 	    r->pushUniformData(RE_UNIFORM_WIRE_COLOR, col);
@@ -431,8 +408,8 @@ GUI_PrimVolumeVelField::drawField(RE_Render	        *r,
 
 	// Draw points so that zero-vel fields appear
 	r->pushPointSize((myObjectSelected || myPrimSelected) ? 4.0 : 2.0);
-	if(instance_group >= 0)
-	    myField->drawInstanceGroup(r, POINT_DRAW_GROUP, instance_group);
+	if(dp.draw_instanced)
+	    myField->drawInstanceGroup(r, POINT_DRAW_GROUP, dp.instance_group);
 	else
 	    myField->draw(r, POINT_DRAW_GROUP);
 	r->popPointSize();
@@ -444,9 +421,8 @@ GUI_PrimVolumeVelField::drawField(RE_Render	        *r,
     }
     else if(render_mode == GR_RENDER_OBJECT_PICK)
     {
-	// just draw, object pick shader is already pushed (GL3 only)
-
-	draw(r, instance_group, 3.0);
+	// just draw, object pick shader is already pushed
+	draw(r, dp.draw_instanced ? dp.instance_group : -1, 3.0);
     }
     else if(render_mode == GR_RENDER_MATTE)
     {
@@ -455,7 +431,7 @@ GUI_PrimVolumeVelField::drawField(RE_Render	        *r,
 
 	r->pushLineWidth(3.0);
 	r->pushShader(sh);
-	draw(r, instance_group, 3.0);
+	draw(r, dp.draw_instanced ? dp.instance_group : -1, 3.0);
 	r->popShader();
 	r->popLineWidth();
     }

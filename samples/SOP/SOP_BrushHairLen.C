@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015
+ * Copyright (c) 2017
  *	Side Effects Software Inc.  All rights reserved.
  *
  * Redistribution and use of Houdini Development Kit samples in source and
@@ -201,9 +201,9 @@ SOP_BrushHairLen::hasStyleChanged(fpreal t)
 }
 
 const GU_Detail *
-SOP_BrushHairLen::getIsectGdp()
+SOP_BrushHairLen::getIsectGdp(fpreal t)
 {
-    OP_Context context(0.0f);
+    OP_Context context(t);
 
     // We always want our first input...  We change our own topology,
     // so it would be a bad thing to use ourselves.

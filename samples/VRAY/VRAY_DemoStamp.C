@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015
+ * Copyright (c) 2017
  *	Side Effects Software Inc.  All rights reserved.
  *
  * Redistribution and use of Houdini Development Kit samples in source and
@@ -29,13 +29,15 @@
 #include <UT/UT_DSOVersion.h>
 #include <GU/GU_Detail.h>
 #include "VRAY_DemoStamp.h"
+#include <VRAY/VRAY_ProceduralFactory.h>
 
 // The vray_ChildBox is a "private" procedural.
 // The user can't allocate one of these directly.
 namespace HDK_Sample {
 /// @brief Procedural used in @ref VRAY/VRAY_DemoStamp.C to render a box
 /// @see @ref VRAY/VRAY_DemoBox.C
-class vray_ChildBox : public VRAY_Procedural {
+class vray_ChildBox : public VRAY_Procedural
+{
 public:
     vray_ChildBox(UT_Vector3 &center, fpreal size)
 	: myCenter(center),
@@ -83,17 +85,23 @@ static VRAY_ProceduralArg	theArgs[] = {
     VRAY_ProceduralArg()
 };
 
-VRAY_Procedural *
-allocProcedural(const char *)
+class ProcDef : public VRAY_ProceduralFactory::ProcDefinition
 {
-    return new VRAY_DemoStamp();
+public:
+    ProcDef()
+	: VRAY_ProceduralFactory::ProcDefinition("demostamp")
+    {
+    }
+    virtual VRAY_Procedural	*create() const { return new VRAY_DemoStamp(); }
+    virtual VRAY_ProceduralArg	*arguments() const { return theArgs; }
+};
+
+void
+registerProcedural(VRAY_ProceduralFactory *factory)
+{
+    factory->insert(new ProcDef);
 }
 
-const VRAY_ProceduralArg *
-getProceduralArgs(const char *)
-{
-    return theArgs;
-}
 
 VRAY_DemoStamp::VRAY_DemoStamp()
 {

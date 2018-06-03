@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015
+ * Copyright (c) 2017
  *	Side Effects Software Inc.  All rights reserved.
  *
  * Redistribution and use of Houdini Development Kit samples in source and
@@ -48,6 +48,7 @@ newVopOperator(OP_OperatorTable *table)
 			  "HDK Switch",			// UI name
 			  VOP_Switch::myConstructor,	// How to create one
 			  VOP_Switch::myTemplateList,	// parm definitions
+			  VOP_Switch::theChildTableName,
 			  0,				// Min # of inputs
 			  VOP_VARIABLE_INOUT_MAX,	// Max # of inputs
 			  "*",				// vopnet mask

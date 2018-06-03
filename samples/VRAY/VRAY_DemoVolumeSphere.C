@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015
+ * Copyright (c) 2017
  *	Side Effects Software Inc.  All rights reserved.
  *
  * Redistribution and use of Houdini Development Kit samples in source and
@@ -33,7 +33,8 @@
 #include <UT/UT_IntArray.h>
 #include <UT/UT_Array.h>
 #include <UT/UT_StringArray.h>
-#include <VRAY/VRAY_Volume.h>
+#include <VGEO/VGEO_Volume.h>
+#include <VRAY/VRAY_ProceduralFactory.h>
 
 //
 // vray_VolumeSphere
@@ -42,7 +43,8 @@
 namespace HDK_Sample {
 
 /// @brief Volume primitive used by @ref VRAY/VRAY_DemoVolumeSphere.C
-class vray_VolumeSphere : public VRAY_Volume {
+class vray_VolumeSphere : public VGEO_Volume
+{
 public:
     virtual float	 getNativeStepSize() const { return 0.1F; }
     virtual void	 getBoxes(UT_Array<UT_BoundingBox> &boxes,
@@ -123,21 +125,22 @@ vray_VolumeSphere::gradient(const UT_Vector3 &,
 //
 // VRAY_DemoVolumeSphere
 //
-
-static VRAY_ProceduralArg	theArgs[] = {
-    VRAY_ProceduralArg()
+class ProcDef : public VRAY_ProceduralFactory::ProcDefinition
+{
+public:
+    ProcDef()
+	: VRAY_ProceduralFactory::ProcDefinition("demovolume")
+    {
+    }
+    virtual VRAY_Procedural	*create() const
+				    { return new VRAY_DemoVolumeSphere(); }
+    virtual VRAY_ProceduralArg	*arguments() const { return nullptr; }
 };
 
-VRAY_Procedural *
-allocProcedural(const char *)
+void
+registerProcedural(VRAY_ProceduralFactory *factory)
 {
-    return new VRAY_DemoVolumeSphere();
-}
-
-const VRAY_ProceduralArg *
-getProceduralArgs(const char *)
-{
-    return theArgs;
+    factory->insert(new ProcDef);
 }
 
 VRAY_DemoVolumeSphere::VRAY_DemoVolumeSphere()

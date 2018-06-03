@@ -17,13 +17,15 @@
 #include "GR_PrimTetra.h"
 #include "GEO_PrimTetra.h"
 
-#include <GT/GT_GEOPrimitive.h>
 #include <DM/DM_RenderTable.h>
+#include <GR/GR_Utils.h>
 #include <RE/RE_ElementArray.h>
 #include <RE/RE_Geometry.h>
 #include <RE/RE_LightList.h>
 #include <RE/RE_ShaderHandle.h>
 #include <RE/RE_VertexArray.h>
+
+#include <GT/GT_GEOPrimitive.h>
 
 using namespace HDK_Sample;
 
@@ -279,16 +281,17 @@ GR_PrimTetra::update(RE_Render		       *r,
     fpreal32 uv[2]  = { 0.0, 0.0 };
     fpreal32 alpha  = 1.0;
     fpreal32 pnt    = 0.0;
-    UT_Matrix4F instance;
-    instance.identity();
 	
     myGeo->createConstAttribute(r, "Cd",    RE_GPU_FLOAT32, 3, col);
     myGeo->createConstAttribute(r, "uv",    RE_GPU_FLOAT32, 2, uv);
     myGeo->createConstAttribute(r, "Alpha", RE_GPU_FLOAT32, 1, &alpha);
     myGeo->createConstAttribute(r, "pointSelection", RE_GPU_FLOAT32, 1,&pnt);
-    myGeo->createConstAttribute(r, "instmat", RE_GPU_MATRIX4, 1,
-				instance.data());
 
+    myInstancedFlag = 
+	GR_Utils::buildInstanceObjectMatrix(r, primh, p, myGeo,
+					    p.instance_version, 0);
+    UT_IntArray dummy;
+    GR_Utils::buildInstanceIndex(r, myGeo, false, dummy, 0);
     
     // Connectivity, for both shaded and wireframe
     myGeo->connectAllPrims(r, RE_GEO_WIRE_IDX, RE_PRIM_LINES, NULL, true);
@@ -315,8 +318,7 @@ void
 GR_PrimTetra::render(RE_Render		    *r,
 		     GR_RenderMode	     render_mode,
 		     GR_RenderFlags	     flags,
-		     const GR_DisplayOption *opt,
-		     const RE_MaterialList  *materials)
+		     GR_DrawParms	     dp)
 {
     if(!myGeo)
 	return;
@@ -388,22 +390,28 @@ GR_PrimTetra::render(RE_Render		    *r,
 
 	
 	// setup materials and lighting
-	if(materials && materials->entries() == 1)
+	if(dp.materials && (dp.materials->getDefaultMaterial()  ||
+			    dp.materials->getFactoryMaterial()))
 	{
 	    RE_Shader *shader = r->getShader();
+	    RE_MaterialPtr mat = dp.materials->getDefaultMaterial();
+	    if(!mat)
+		mat = dp.materials->getFactoryMaterial();
 	    
 	    // Set up lighting for any GL3 lighting blocks
-	    if(shader)
-		opt->getLightList()->bindForShader(r, shader);
+	    if(shader && dp.opts->getLightList())
+		dp.opts->getLightList()->bindForShader(r, shader);
 
 	    // set up the main material block for GL3 
-	    (*materials)(0)->updateShaderForMaterial(r, 0, true, true,
-						     RE_SHADER_TARGET_TRIANGLE,
-						     shader);
+	    mat->updateShaderForMaterial(r, 0, true, true,
+					 RE_SHADER_TARGET_TRIANGLE, shader);
 	}
 
 	// Draw call for the geometry
-	myGeo->draw(r, RE_GEO_SHADED_IDX);
+	if(dp.draw_instanced)
+	    myGeo->drawInstanceGroup(r, RE_GEO_SHADED_IDX, dp.instance_group);
+	else
+	    myGeo->draw(r, RE_GEO_SHADED_IDX);
 
 	if(r->getShader())
 	    r->getShader()->removeOverrideBlocks();
@@ -420,25 +428,15 @@ GR_PrimTetra::render(RE_Render		    *r,
 	// GL3 requires a shader even for simple wireframe rendering.
 	r->pushShader(theLineShader);
 
-	myGeo->draw(r, RE_GEO_WIRE_IDX);
+	if(dp.draw_instanced)
+	    myGeo->drawInstanceGroup(r, RE_GEO_WIRE_IDX, dp.instance_group);
+	else
+	    myGeo->draw(r, RE_GEO_WIRE_IDX);
 
 	r->popShader();
     }
 }
 
-void
-GR_PrimTetra::renderInstances(RE_Render		    *r,
-			      GR_RenderMode	     render_mode,
-			      GR_RenderFlags	     flags,
-			      const GR_DisplayOption *opt,
-			      const RE_MaterialList  *materials,
-			      int instance_grp)
-{
-    // Similar to render, except that all the instances in group 'instance_grp'
-    // should be rendered. Each instance group will call update() with
-    // GR_UpdateParms::instance_group to identify the group and
-    // GR_UpdateParms::instances to specify the transforms.
-}
 void
 GR_PrimTetra::renderDecoration(RE_Render *r,
 			       GR_Decoration decor,

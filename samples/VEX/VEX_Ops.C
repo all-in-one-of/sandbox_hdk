@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015
+ * Copyright (c) 2017
  *	Side Effects Software Inc.  All rights reserved.
  *
  * Redistribution and use of Houdini Development Kit samples in source and
@@ -35,6 +35,8 @@
 #include <UT/UT_Thread.h>
 #include <VEX/VEX_VexOp.h>
 
+using namespace UT::Literal;
+
 namespace HDK_Sample {
 //
 // Callback for time() function
@@ -42,21 +44,21 @@ namespace HDK_Sample {
 static void
 pid_Evaluate(int, void *argv[], void *)
 {
-    int		*result = (int *)argv[0];
+    VEXint	*result = (VEXint *)argv[0];
     *result = getpid();
 }
 
 static void
 tid_Evaluate(int, void *argv[], void *)
 {
-    int		*result = (int *)argv[0];
+    VEXint	*result = (VEXint *)argv[0];
     *result = UT_Thread::getMyThreadId();
 }
 
 static void
 printStuff(int, void *argv[], void *)
 {
-    int		*result = (int *)argv[0];
+    VEXint	*result = (VEXint *)argv[0];
     static int	callCount = 0;
     fprintf(stderr, "Still here %d\n", callCount++);
     result[0] = 0;
@@ -86,19 +88,19 @@ newVEXOp(void *)
 {
     //
     //		Returns a random number based on the seed passed in
-    new VEX_VexOp("getpid@&I", pid_Evaluate,
+    new VEX_VexOp("getpid@&I"_sh, pid_Evaluate,
 		VEX_OP_CONTEXT|VEX_SHADING_CONTEXT,
 		initFunc, cleanupFunc, VEX_OPTIMIZE_1);
-    new VEX_VexOp("gettid@&I", tid_Evaluate,
+    new VEX_VexOp("gettid@&I"_sh, tid_Evaluate,
 		VEX_OP_CONTEXT|VEX_SHADING_CONTEXT,
 		0, 0, VEX_OPTIMIZE_1);
-    new VEX_VexOp("sticky@&I", printStuff,
+    new VEX_VexOp("sticky@&I"_sh, printStuff,
 		VEX_OP_CONTEXT|VEX_SHADING_CONTEXT,
 		0, 0, VEX_OPTIMIZE_0);
-    new VEX_VexOp("rcode@&I*F*FFF", printStuff,
+    new VEX_VexOp("rcode@&I*F*FFF"_sh, printStuff,
 		VEX_OP_CONTEXT|VEX_SHADING_CONTEXT,
 		0, 0, VEX_OPTIMIZE_0, true);
-    new VEX_VexOp("rcode@&I*F*FS", printStuff,
+    new VEX_VexOp("rcode@&I*F*FS"_sh, printStuff,
 		VEX_OP_CONTEXT|VEX_SHADING_CONTEXT,
 		0, 0, VEX_OPTIMIZE_0);
 }

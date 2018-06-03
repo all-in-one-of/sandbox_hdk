@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015
+ * Copyright (c) 2017
  *	Side Effects Software Inc.  All rights reserved.
  *
  * Redistribution and use of Houdini Development Kit samples in source and
@@ -47,9 +47,9 @@
 #include <CVEX/CVEX_Context.h>
 #include <CVEX/CVEX_Value.h>
 #include <VEX/VEX_Error.h>
+#include <UT/UT_Array.h>
 #include <UT/UT_DSOVersion.h>
 #include <UT/UT_Interrupt.h>
-#include <UT/UT_ScopedArray.h>
 
 using namespace HDK_Sample;
 void
@@ -60,6 +60,7 @@ newSopOperator(OP_OperatorTable *table)
         "PrimVOP",
         SOP_PrimVOP::myConstructor,
         SOP_PrimVOP::myTemplateList,
+        SOP_PrimVOP::theChildTableName,
         1,
         1,
         VOP_CodeGenerator::theLocalVariables));
@@ -85,6 +86,8 @@ static PRM_Name vexsrcNames[] =
     PRM_Name(0)
 };
 static PRM_ChoiceList vexsrcMenu(PRM_CHOICELIST_SINGLE, vexsrcNames);
+
+const char *SOP_PrimVOP::theChildTableName = VOP_TABLE_NAME;
 
 PRM_Template
 SOP_PrimVOP::myTemplateList[]=
@@ -115,9 +118,9 @@ SOP_PrimVOP::myConstructor(OP_Network *net,const char *name,OP_Operator *entry)
 SOP_PrimVOP::SOP_PrimVOP(OP_Network *net, const char *name, OP_Operator *entry)
     : SOP_Node(net, name, entry),
         // Set up our code generator for CVEX
-        myCodeGenerator(this, new VOP_LanguageContextTypeList( 
-            VOP_LANGUAGE_VEX, VOPconvertToContextType( VEX_CVEX_CONTEXT )),
-        1, 1)
+        myCodeGenerator(this, 
+	    new VOP_LanguageContextTypeList(VOP_LANGUAGE_VEX, VOP_CVEX_SHADER),
+	    1, 1)
 {
     // This indicates that this SOP manually manages its data IDs,
     // so that Houdini can identify what attributes may have changed,
@@ -130,9 +133,6 @@ SOP_PrimVOP::SOP_PrimVOP(OP_Network *net, const char *name, OP_Operator *entry)
     // may not update, or SOPs that check data IDs
     // may not cook correctly, so be *very* careful!
     mySopFlags.setManagesDataIDs(true);
-
-    // Add a operator table so we can have child nodes.
-    setOperatorTable(getOperatorTable(VOP_TABLE_NAME));
 }
 
 SOP_PrimVOP::~SOP_PrimVOP()
@@ -206,8 +206,8 @@ SOP_PrimVOP::executeVex(int argc, char **argv,
     // those parameters to vex.  Then we process vex, and read out
     // the new values.
     const int chunksize = 1024;
-    UT_ScopedArray<int> primid(new int[chunksize]);
-    UT_ScopedArray<exint> procid(new exint[chunksize]);
+    UT_Array<int> primid(chunksize, chunksize);
+    UT_Array<exint> procid(chunksize, chunksize);
 
     // Set the callback.
     rundata.setOpCaller(&opcaller);
@@ -218,7 +218,7 @@ SOP_PrimVOP::executeVex(int argc, char **argv,
 
     // In order to sort the resulting queue edits, we have to have
     // a global order for all vex processors.
-    rundata.setProcId(procid.get());
+    rundata.setProcId(procid.array());
 
     // These numbers are to seed the queue so it knows where to put
     // newly created primitive/point numbers.
@@ -232,21 +232,21 @@ SOP_PrimVOP::executeVex(int argc, char **argv,
     GEO_Primitive *prim;
     GA_FOR_ALL_PRIMITIVES(gdp, prim)
     {
-	primid[n] = (int)prim->getMapIndex();
-	procid[n] = (exint)prim->getMapIndex();
+	primid(n) = (int)prim->getMapIndex();
+	procid(n) = (exint)prim->getMapIndex();
 
 	n++;
 
 	if (n >= chunksize)
 	{
-	    processVexBlock(context, rundata, argc, argv, primid.get(), n, t);
+	    processVexBlock(context, rundata, argc, argv, primid.array(), n, t);
 	    n = 0;
 	}
     }
 
     // Handle any trailing values.
     if (n)
-	processVexBlock(context, rundata, argc, argv, primid.get(), n, t);
+	processVexBlock(context, rundata, argc, argv, primid.array(), n, t);
 
     // If multithreaded, the following is done *after*
     // all threads have joined.
@@ -564,18 +564,18 @@ SOP_PrimVOP::processVexBlock(CVEX_Context &context,
 	return;
 
     // Check for lazily bound inputs
-    UT_ScopedArray<UT_Vector3> P(NULL);
+    UT_Array<UT_Vector3> P;
     CVEX_Value *var;
     var = context.findInput("P", CVEX_TYPE_VECTOR3);
     if (var)
     {
-	P.reset(new UT_Vector3[n]);
+	P.setSize(n);
 	for (int i = 0; i < n; i++)
 	{
             GA_Offset primoff = gdp->primitiveOffset(GA_Index(primid[i]));
-	    P[i] = gdp->getGEOPrimitive(primoff)->baryCenter();
+	    P(i) = gdp->getGEOPrimitive(primoff)->baryCenter();
 	}
-	var->setTypedData(P.get(), n);
+	var->setTypedData(P.array(), n);
     }
 
     // Check if any of our parameters exist as either inputs or outputs.

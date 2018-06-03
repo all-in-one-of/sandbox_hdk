@@ -274,19 +274,7 @@ void
 GUI_PolySoupBox::render(RE_Render	      *r,
 			GR_RenderMode	       render_mode,
 			GR_RenderFlags	       flags,
-			const GR_DisplayOption *opt,
-			const RE_MaterialList  *materials)
-{
-    // The native Houdini primitive for polysoups will do the rendering. 
-}
-
-void
-GUI_PolySoupBox::renderInstances(RE_Render	       *r,
-				 GR_RenderMode		render_mode,
-				 GR_RenderFlags		flags,
-				 const GR_DisplayOption *opt,
-				 const RE_MaterialList  *materials,
-				 int instance_group)
+			GR_DrawParms	       dp)
 {
     // The native Houdini primitive for polysoups will do the rendering. 
 }

@@ -38,8 +38,6 @@
 #ifndef __SNOW_Solver_h__
 #define __SNOW_Solver_h__
 
-#include <UT/UT_HashTable.h>
-#include <UT/UT_Hash.h>
 #include <UT/UT_IStream.h>
 #include <UT/UT_Map.h>
 #include <UT/UT_VoxelArray.h>

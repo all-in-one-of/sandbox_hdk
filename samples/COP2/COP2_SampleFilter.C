@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015
+ * Copyright (c) 2017
  *	Side Effects Software Inc.  All rights reserved.
  *
  * Redistribution and use of Houdini Development Kit samples in source and
@@ -230,6 +230,12 @@ public:
     virtual int	filter(TIL_TileList *output,
 		       const TIL_Region *input, float t,
 		       int thread=-1, void *data=0);
+
+    virtual int	 filter(TIL_Region *output,
+			const TIL_Region *input, float t,
+			int thread, void *data)
+		    { return RU_FilterOp<Type,fast>::filter(
+				output, input, t, thread, data); }
 };
 
 IMPLEMENT_FILTER_OP(cop2_EdgeEnhance, cop2_EdgeEnhanceOp);

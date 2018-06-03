@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015
+ * Copyright (c) 2017
  *	Side Effects Software Inc.  All rights reserved.
  *
  * Redistribution and use of Houdini Development Kit samples in source and
@@ -29,7 +29,7 @@
 
 // Enable to replace GT primitive generation with a GR render hook for tetras
 // (GR_PrimTetra).
-//#define TETRA_GR_PRIMITIVE
+#define TETRA_GR_PRIMITIVE
 
 // For GR_PrimTetra, enable to see how GR primitive collection works.
 //#define TETRA_GR_PRIM_COLLECTION

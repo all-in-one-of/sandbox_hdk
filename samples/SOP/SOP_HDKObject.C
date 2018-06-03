@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015
+ * Copyright (c) 2017
  *	Side Effects Software Inc.  All rights reserved.
  *
  * Redistribution and use of Houdini Development Kit samples in source and
@@ -246,7 +246,7 @@ SOP_HDKObject::cookMySop(OP_Context &context)
         bool firstmerge = !copiedfirst;
 
         // Choose the best copy method we can
-        int copymethod = GEO_COPY_ADD;
+        GEO_CopyMethod copymethod = GEO_COPY_ADD;
         if (!copiedfirst)
         {
             copymethod = GEO_COPY_START;

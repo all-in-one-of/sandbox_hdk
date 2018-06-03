@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015
+ * Copyright (c) 2017
  *	Side Effects Software Inc.  All rights reserved.
  *
  * Redistribution and use of Houdini Development Kit samples in source and
@@ -37,6 +37,8 @@
 #include <UT/UT_Matrix4.h>
 #include <UT/UT_Assert.h>
 #include <VEX/VEX_VexOp.h>
+
+using namespace UT::Literal;
 
 namespace HDK_Sample {
 
@@ -117,24 +119,24 @@ newVEXOp(void *)
 {
     // Sort the array by value for scalars, length for vectors, or
     // determinant for matrices.
-    new VEX_VexOp("hdksort@*[I",	// Signature
-		sort<int>);		// Evaluator
-    new VEX_VexOp("hdksort@*[F",	// Signature
-		sort<float>);		// Evaluator
-    new VEX_VexOp("hdksort@*[S",	// Signature
+    new VEX_VexOp("hdksort@*[I"_sh,	// Signature
+		sort<VEXint>);		// Evaluator
+    new VEX_VexOp("hdksort@*[F"_sh,	// Signature
+		sort<VEXfloat>);	// Evaluator
+    new VEX_VexOp("hdksort@*[S"_sh,	// Signature
 		sort<const char *>);	// Evaluator
-    new VEX_VexOp("hdksort@*[V",	// Signature
-		sort<UT_Vector3>);	// Evaluator
-    new VEX_VexOp("hdksort@*[P",	// Signature
-		sort<UT_Vector4>);	// Evaluator
-    new VEX_VexOp("hdksort@*[3",	// Signature
-		sort<UT_Matrix3>);	// Evaluator
-    new VEX_VexOp("hdksort@*[4",	// Signature
-		sort<UT_Matrix4>);	// Evaluator
+    new VEX_VexOp("hdksort@*[V"_sh,	// Signature
+		sort<VEXvec3>);		// Evaluator
+    new VEX_VexOp("hdksort@*[P"_sh,	// Signature
+		sort<VEXvec4>);		// Evaluator
+    new VEX_VexOp("hdksort@*[3"_sh,	// Signature
+		sort<VEXmat3>);		// Evaluator
+    new VEX_VexOp("hdksort@*[4"_sh,	// Signature
+		sort<VEXmat4>);		// Evaluator
 
     // Remove every second string in the source array and store the result
     // in the destination.
-    new VEX_VexOp("hdkdecimate@&[S[S",	// Signature
+    new VEX_VexOp("hdkdecimate@&[S[S"_sh,	// Signature
 		decimate);		// Evaluator
 }
 

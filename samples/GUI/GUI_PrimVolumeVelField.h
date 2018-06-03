@@ -83,16 +83,7 @@ public:
     virtual void	render(RE_Render	      *r,
 			       GR_RenderMode	       render_mode,
 			       GR_RenderFlags	       flags,
-			       const GR_DisplayOption *opt,
-			       const RE_MaterialList  *materials);
-
-    /// Similar to render(), but with object instances.
-    virtual void	renderInstances(RE_Render	       *r,
-					GR_RenderMode		render_mode,
-					GR_RenderFlags		flags,
-					const GR_DisplayOption *opt,
-					const RE_MaterialList  *materials,
-					int			instance_grp);
+			       GR_DrawParms	       dp);
     
     virtual int		renderPick(RE_Render *r,
 				   const GR_DisplayOption *opt,
@@ -105,12 +96,6 @@ public:
 						 bool first_init);
     
 private:
-    void		drawField(RE_Render	        *r,
-				  GR_RenderMode		 render_mode,
-				  GR_RenderFlags	 flags,
-				  const GR_DisplayOption *opt,
-				  const RE_MaterialList  *materials,
-				  int			 instance_grp);
 
     void		draw(RE_Render *r,
 			     int instance_group,

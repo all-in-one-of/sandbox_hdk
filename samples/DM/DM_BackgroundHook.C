@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015
+ * Copyright (c) 2017
  *	Side Effects Software Inc.  All rights reserved.
  *
  * Redistribution and use of Houdini Development Kit samples in source and
@@ -35,11 +35,40 @@
 #include <RE/RE_VertexArray.h>
 
 #include <GUI/GUI_DisplayOption.h>
+#include <GUI/GUI_ViewParameter.h>
+#include <GUI/GUI_ViewState.h>
+#include <DM/DM_VPortAgent.h>
 #include <DM/DM_RenderTable.h>
 #include <DM/DM_SceneHook.h>
 
-namespace HDK_Sample {
+#define CHECKER_CONNECT_GROUP 0
 
+namespace HDK_Sample
+{
+static const char *theVert =
+    "#version 150\n"
+    "in vec2 P;\n"
+    "out vec2 uv;\n"
+    "uniform int width;\n"
+    "uniform int height;\n"
+    "uniform float check_size;\n"
+    "void main() {\n"
+    "  gl_Position = vec4(P,0.,1.);\n"
+    "  uv = P * 0.5;\n"
+    "  uv.x *= width  / check_size;\n"
+    "  uv.y *= height / check_size;\n"
+    "}\n";
+
+static const char *theFrag = 
+    "#version 150\n"
+    "in vec2 uv;\n"
+    "out vec4 color;\n"
+    "uniform sampler2D checker;\n"
+    "void main() {\n"
+    "  color = texture(checker, uv);\n"
+    "}\n";
+
+    
 // This hook is the actual render hook, responsible for doing the GL drawing.
 class DM_BackgroundRenderHook : public DM_SceneRenderHook
 {
@@ -63,8 +92,10 @@ public:
 private:
     RE_Texture	*myCheckerTex;
     RE_Geometry *myQuad;
+    static RE_Shader *theBGShader;
 };
 
+RE_Shader *DM_BackgroundRenderHook::theBGShader = NULL;
 
 // This hook is responsible for creating and deleting render hooks per viewport.
 // This is the hook that is registered with the DM_RenderTable.    
@@ -119,8 +150,17 @@ DM_BackgroundRenderHook::render(RE_Render *r,
     // false.
     if(!hook_data.disp_options->isSceneOptionEnabled("checker_bg"))
 	return false;
+
+    if(!theBGShader)
+    {
+	theBGShader = RE_Shader::create("Checker BG");
+	theBGShader->addShader(r, RE_SHADER_VERTEX, theVert, "vert", 0);
+	theBGShader->addShader(r, RE_SHADER_FRAGMENT, theFrag, "frag", 0);
+	if(!theBGShader->linkShaders(r))
+	    return false;
+    }
     
-    RE_VertexArray *pos, *tex;
+    RE_VertexArray *pos = NULL;
 	    
     if(!myCheckerTex)
     {
@@ -140,40 +180,51 @@ DM_BackgroundRenderHook::render(RE_Render *r,
 
 	// Create a viewport-sized quad with texture coords.
 	myQuad = new RE_Geometry(4);
-	pos = myQuad->createAttribute(r, "P", RE_GPU_FLOAT32, 3, NULL);
-	tex = myQuad->createAttribute(r, "uv", RE_GPU_FLOAT32, 2, NULL);
-	myQuad->connectAllPrims(r, 0, RE_PRIM_TRIANGLE_STRIP);
+	pos = myQuad->createAttribute(r, "P", RE_GPU_FLOAT32, 2, NULL);
+	myQuad->connectAllPrims(r,
+				CHECKER_CONNECT_GROUP,
+				RE_PRIM_TRIANGLE_STRIP);
+    }
+    else
+	pos = myQuad->getAttribute("P");
+
+    UT_Vector2FArray p(4,4);
+
+    // full viewport quad
+    p(0).assign(-1, -1);
+    p(1).assign(-1,  1);
+    p(2).assign( 1, -1);
+    p(3).assign( 1,  1);
+
+    pos->setArray(r, p.array());
+
+    // Determine checker size, based off of the FOV.
+    const GUI_ViewParameter &viewparms =
+	viewport().getViewStateRef().getViewParameterRef();
+    fpreal check_size = 16.0;
+    
+    if(viewparms.getOrthoFlag())
+    {
+	check_size =  100.0 / viewparms.getOrthoWidth();
     }
     else
     {
-	pos = myQuad->getAttribute("P");
-	tex = myQuad->getAttribute("uv");
+	const fpreal ap = viewparms.getAperture();
+	const fpreal fc = viewparms.getFocalLength();
+	const fpreal w = (ap / fc);
+	check_size = 13.25 / w;
     }
 
-    UT_Vector3FArray p(4,4);
-    UT_Vector2FArray t(4,4);
-
-    // full viewport quad
-    p(0).assign(0,			0, 0);
-    p(1).assign(hook_data.view_width-1, 0, 0);
-    p(2).assign(0,			hook_data.view_height-1, 0);
-    p(3).assign(hook_data.view_width-1, hook_data.view_height-1, 0);
-
-    // texture coords (8x8 checker size, tex size = 2, so 1/(2*8) scale).
-    t(0) = UT_Vector2(p(0).x(), p(0).y()) * 0.0675;
-    t(1) = UT_Vector2(p(1).x(), p(1).y()) * 0.0675;
-    t(2) = UT_Vector2(p(2).x(), p(2).y()) * 0.0675;
-    t(3) = UT_Vector2(p(3).x(), p(3).y()) * 0.0675;
-	    
-    pos->setArray(r, p.array());
-    tex->setArray(r, t.array());
-
     // Draw the textured quad
-    r->pushTextureState(0);
-    r->bindTexture(myCheckerTex, 0, RE_TEXTURE_REPLACE);
-	    
-    myQuad->draw(r, 0);
-
+    const int tex_bind = theBGShader->getUniformTextureUnit("checker");
+    r->pushTextureState(tex_bind);
+    r->bindTexture(myCheckerTex, tex_bind);
+    r->pushShader(theBGShader);
+    theBGShader->bindInt(r, "width", hook_data.view_width);
+    theBGShader->bindInt(r, "height", hook_data.view_height);
+    theBGShader->bindFloat(r, "check_size", check_size);
+    myQuad->draw(r, CHECKER_CONNECT_GROUP);
+    r->popShader();
     r->popTextureState();
 
     // Returning true indicates that no other background replacement hooks

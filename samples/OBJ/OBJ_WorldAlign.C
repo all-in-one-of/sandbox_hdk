@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015
+ * Copyright (c) 2017
  *	Side Effects Software Inc.  All rights reserved.
  *
  * Redistribution and use of Houdini Development Kit samples in source and
@@ -165,12 +165,12 @@ OBJ_WorldAlign::cookMyObj(OP_Context &context)
     errorstatus = OBJ_Geometry::cookMyObj(context);
 
     // get rid of the rotation component in the matrices
-    myWorldXform.extractRotate(rotation);
+    getWorldXform().extractRotate(rotation);
     if( ! rotation.invert() )
     {
 	rotation4    = rotation;
-	myWorldXform = rotation4 * myWorldXform;
-	myXform	     = rotation4 * myXform;
+	setWorldXform(rotation4 * getWorldXform());
+	setLocalXform(rotation4 * getLocalXform());
     }
 
     return errorstatus;
@@ -188,7 +188,8 @@ newObjectOperator(OP_OperatorTable *table)
 		"World Align",	    // operator label
 		OBJ_WorldAlign::myConstructor,	// node instance constructor
 		OBJ_WorldAlign::buildTemplatePair(0), // parameters
+		OBJ_WorldAlign::theChildTableName,
 		0,	// minimum inputs
 		1,	// maximum inputs 
-		0));	// variables
+		nullptr));	// variables
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015
+ * Copyright (c) 2017
  *	Side Effects Software Inc.  All rights reserved.
  *
  * Redistribution and use of Houdini Development Kit samples in source and
@@ -50,9 +50,9 @@ protected:
 					const SIM_ObjectArray &objects,
 					DOP_Engine &engine);
     virtual void	 getInputInfoSubclass(int inputidx,
-					DOP_InOutInfo &info);
+					DOP_InOutInfo &info) const;
     virtual void	 getOutputInfoSubclass(int inputidx,
-					DOP_InOutInfo &info);
+					DOP_InOutInfo &info) const;
 
 private:
     void		 GROUP(UT_String &str, fpreal t);

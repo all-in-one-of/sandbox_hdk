@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015
+ * Copyright (c) 2017
  *	Side Effects Software Inc.  All rights reserved.
  *
  * Redistribution and use of Houdini Development Kit samples in source and
@@ -38,6 +38,14 @@
 
 namespace HDK_Sample {
 
+const char *copy_frag =
+    "#version 150\n"
+    "uniform sampler2D beauty;\n"
+    "in vec2 texcoord0; \n"
+    "out vec4 color; \n"
+    "void main()\n"
+    "{ color = texture(beauty, texcoord0); }\n";
+
 const char *bloom_vert =
     "#version 150\n"
     "in vec3 P;\n"
@@ -58,8 +66,8 @@ const char *bloom_frag =
     "out vec4 color; \n"
     "void main()\n"
     "{\n"
-    "  float scale = 2.5 - texture2D(beauty, texcoord0).a * 2.0;\n"
-    "  color = scale * (texture2D( bloom, texcoord0) * 0.24 +"
+    "  float scale = 2.5 - texture(beauty, texcoord0).a * 2.0;\n"
+    "  color = scale * (texture( bloom, texcoord0) * 0.24 +"
     "      (texture2D(bloom, texcoord0 + vec2(off.x, 0.0)) + \n"
     "       texture2D(bloom, texcoord0 + vec2(-off.x, 0.0)) + \n"
     "       texture2D(bloom, texcoord0 + vec2(0.0, -off.y)) + \n"
@@ -106,6 +114,7 @@ private:
     RE_OGLFramebuffer *myBloomBuffer;
     RE_Texture	      *myBloomTexture;
     
+    static RE_Shader  *theCopyShader;
     static RE_Shader  *theBloomShader;
 };
 
@@ -129,6 +138,7 @@ public:
 
 using namespace HDK_Sample;
 
+RE_Shader *DM_LightBloomRenderHook::theCopyShader = NULL;
 RE_Shader *DM_LightBloomRenderHook::theBloomShader = NULL;
 
 
@@ -143,13 +153,25 @@ DM_LightBloomRenderHook::render(RE_Render *r,
     if(!beauty)
 	return false;
 
+    if(!theCopyShader)
+    {
+	theCopyShader = RE_Shader::create("Copy Shader");
+	theCopyShader->addShader(r, RE_SHADER_VERTEX, bloom_vert,"vert", 0);
+	theCopyShader->addShader(r, RE_SHADER_FRAGMENT, copy_frag,"frag", 0);
+	if(!theCopyShader->linkShaders(r))
+	{
+	    return false;
+	}
+    }
     if(!theBloomShader)
     {
 	theBloomShader = RE_Shader::create("Bloom Shader");
 	theBloomShader->addShader(r, RE_SHADER_VERTEX, bloom_vert,"vert", 0);
 	theBloomShader->addShader(r, RE_SHADER_FRAGMENT, bloom_frag,"frag", 0);
 	if(!theBloomShader->linkShaders(r))
+	{
 	    return false;
+	}
 
 	theBloomShader->bindInt(r, "beauty", 0); // texture unit 0
 	theBloomShader->bindInt(r, "bloom",  1); // texture unit 1
@@ -182,7 +204,7 @@ DM_LightBloomRenderHook::render(RE_Render *r,
     UT_DimRect saved_vp = r->getViewport2DI();
     UT_DimRect vp(0,0, bw,bh);
     RE_Geometry geo(4);
-    fpreal32 view[12] = { -1, -1,-0.1, -1, 1,-0.1, 1, -1,-0.1, 1, 1,-1 };
+    fpreal32 view[12] = { -1.f, -1.f, -0.1f, -1.f, 1.f, -0.1f, 1.f, -1.f, -0.1f, 1.f, 1.f, -1.f };
     fpreal32 texc[8] = {  0,  0,  0, 1, 1,  0, 1, 1 };
     geo.createAttribute(r, "P", RE_GPU_FLOAT32, 3, view);
     geo.createAttribute(r, "uv", RE_GPU_FLOAT32, 2, texc);
@@ -190,28 +212,24 @@ DM_LightBloomRenderHook::render(RE_Render *r,
     
     // copy beauty texture to our texture
     r->pushDrawFramebuffer( myBloomBuffer );
-    r->clear();
     r->viewport2DI(vp);
-    r->pushMatrix(1);
-    r->ortho2DW(-1, 1, -1,1);
-    r->loadIdentityMatrix();
+    r->clearC();
 
     r->pushTextureState(0);
     r->bindTexture( beauty, 0);
 
+    r->pushShader(theCopyShader);
     geo.draw(r, 0);
 
     r->popTextureState();
 
-    r->popMatrix(1);
-    
     r->popDrawFramebuffer();
 
     r->viewport2DI(saved_vp);
 
     // do a simple additive blur
 
-    r->pushShader(theBloomShader);
+    r->bindShader(theBloomShader);
 
     fpreal32 offset[2];
     offset[0] = 2.0 / bw;
@@ -224,8 +242,10 @@ DM_LightBloomRenderHook::render(RE_Render *r,
     r->setAlphaBlendFunction(RE_SBLEND_ZERO, RE_DBLEND_ONE); // ignore
 
     r->pushTextureState(RE_ALL_UNITS);
-    r->bindTexture(beauty, 0);
-    r->bindTexture(myBloomTexture, 1);
+    r->bindTexture(beauty,
+		   theBloomShader->getUniformTextureUnit("beauty"));
+    r->bindTexture(myBloomTexture,
+		   theBloomShader->getUniformTextureUnit("bloom"));
 
     r->pushDepthState();
     r->disableDepthTest();

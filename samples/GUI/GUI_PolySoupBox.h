@@ -86,15 +86,7 @@ public:
     virtual void	render(RE_Render	      *r,
 			       GR_RenderMode	       render_mode,
 			       GR_RenderFlags	       flags,
-			       const GR_DisplayOption *opt,
-			       const RE_MaterialList  *materials);
-
-    virtual void	renderInstances(RE_Render	       *r,
-					GR_RenderMode		render_mode,
-					GR_RenderFlags		flags,
-					const GR_DisplayOption *opt,
-					const RE_MaterialList  *materials,
-					int instance_group);
+			       GR_DrawParms	       dp);
 
     virtual int		renderPick(RE_Render *r,
 				   const GR_DisplayOption *opt,

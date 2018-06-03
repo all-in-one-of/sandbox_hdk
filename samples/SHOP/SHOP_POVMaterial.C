@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015
+ * Copyright (c) 2017
  *	Side Effects Software Inc.  All rights reserved.
  *
  * Redistribution and use of Houdini Development Kit samples in source and
@@ -129,6 +129,7 @@ newShopOperator(OP_OperatorTable *table)
     shop = new SHOP_Operator("pov", "POV Material",
 	    theConstructor,
 	    theTemplates,
+	    nullptr,
 	    0, 0,
 	    SHOP_Node::myVariableList,
 	    OP_FLAG_GENERATOR,

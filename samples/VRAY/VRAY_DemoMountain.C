@@ -28,9 +28,9 @@
 
 #include "VRAY_DemoMountain.h"
 #include <UT/UT_DSOVersion.h>
-#include <GEO/GEO_AttributeHandle.h>
 #include <GU/GU_Detail.h>
 #include <GU/GU_PrimPoly.h>
+#include <VRAY/VRAY_ProceduralFactory.h>
 
 using namespace HDK_Sample;
 
@@ -48,16 +48,22 @@ static VRAY_ProceduralArg	theArgs[] = {
     VRAY_ProceduralArg()
 };
 
-VRAY_Procedural *
-allocProcedural(const char *)
+class ProcDef : public VRAY_ProceduralFactory::ProcDefinition
 {
-    return new VRAY_DemoMountain();
-}
+public:
+    ProcDef()
+	: VRAY_ProceduralFactory::ProcDefinition("demomountain")
+    {
+    }
+    virtual VRAY_Procedural	*create() const
+					{ return new VRAY_DemoMountain(); }
+    virtual VRAY_ProceduralArg	*arguments() const { return theArgs; }
+};
 
-const VRAY_ProceduralArg *
-getProceduralArgs(const char *)
+void
+registerProcedural(VRAY_ProceduralFactory *factory)
 {
-    return theArgs;
+    factory->insert(new ProcDef);
 }
 
 VRAY_DemoMountain::VRAY_DemoMountain(int splits)
@@ -209,8 +215,7 @@ VRAY_DemoMountain::fractalRender()
 
     for (int i = 0; i < 3; i++)
     {
-        geo->setPos3(poly->getPointOffset(i),
-                     myP[i].pos.x(), myP[i].pos.y(), myP[i].pos.z());
+        geo->setPos3(poly->getPointOffset(i), myP[i].pos);
     }
 
     // Now, add the geometry to mantra.

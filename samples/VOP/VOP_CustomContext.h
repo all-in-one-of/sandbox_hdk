@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015
+ * Copyright (c) 2017
  *	Side Effects Software Inc.  All rights reserved.
  *
  * Redistribution and use of Houdini Development Kit samples in source and
@@ -71,6 +71,8 @@ public:
 
     /// Override this to do VOP network evaluation
     virtual OP_ERROR		cookMySop(OP_Context &context);
+
+    static const char		*theChildTableName;
 
 protected:
 				SOP_CustomVop(

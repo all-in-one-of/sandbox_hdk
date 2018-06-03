@@ -11,9 +11,9 @@
  *	Canada   M5V 3E7
  *	416-504-9876
  *
- * NAME:	GEO_PrimTetra.C ( GEO Library, C++)
+ * NAME:	GEO_PrimTetra.C (HDK Sample, C++)
  *
- * COMMENTS:	Base class for tetrahedrons.
+ * COMMENTS:	This is an HDK example for making a custom tetrahedron primitive type.
  */
 
 #include "GEO_PrimTetra.h"
@@ -66,7 +66,7 @@
 
 using namespace HDK_Sample;
 
-GA_PrimitiveDefinition *GEO_PrimTetra::theDef = 0;
+GA_PrimitiveDefinition *GEO_PrimTetra::theDefinition = nullptr;
 
 // So it doesn't look like a magic number
 #define PT_PER_TET 4
@@ -74,51 +74,36 @@ GA_PrimitiveDefinition *GEO_PrimTetra::theDef = 0;
 GEO_PrimTetra::GEO_PrimTetra(GA_Detail &d, GA_Offset offset)
     : GEO_Primitive(&d, offset)
 {
-    GA_Offset vtxoff = d.appendVertexBlock(4);
-    for (GA_Size i = 0; i < PT_PER_TET; i++)
-    {
-        myVertexOffsets[i] = GA_Size(vtxoff);
-        d.getTopology().wireVertexPrimitive(vtxoff, offset);
-        ++vtxoff;
-    }
-}
-
-GEO_PrimTetra::GEO_PrimTetra(const GA_MergeMap &map,
-                GA_Detail &detail,
-                GA_Offset offset,
-                const GEO_PrimTetra &src)
-    : GEO_Primitive(static_cast<GEO_Detail *>(&detail), offset)
-{
-    for (GA_Size i = 0; i < PT_PER_TET; i++)
-    {
-        myVertexOffsets[i] = GA_Size(map.mapDestFromSource(GA_ATTRIB_VERTEX, GA_Offset(src.myVertexOffsets[i])));
-    }
+    // NOTE: There used to be an option to use a separate "merge constructor"
+    //       to allow the regular constructor to add vertices to the detail,
+    //       but this is no longer allowed.  This constructor *must* be safe
+    //       to call from multiple threads on the same detail at the same time.
 }
 
 GEO_PrimTetra::~GEO_PrimTetra()
 {
-    for (GA_Size i = 0; i < PT_PER_TET; i++)
-    {
-	if (fastVertexOffset(i) != GA_INVALID_OFFSET)
-	    destroyVertex(fastVertexOffset(i));
-    }
-}
-
-void
-GEO_PrimTetra::clearForDeletion()
-{
-    for (int i = 0; i < PT_PER_TET; i++)
-	myVertexOffsets[i] = GA_INVALID_OFFSET;
-    GEO_Primitive::clearForDeletion();
+    // This class doesn't have anything that needs explicit destruction,
+    // apart from what's done in the automatically-called base class
+    // destructor.  If you add anything that needs to be explicitly
+    // cleaned up, do it here, and make sure that it's safe to be
+    // done to multiple primitives of the same detail at the same time.
 }
 
 void
 GEO_PrimTetra::stashed(bool beingstashed, GA_Offset offset)
 {
-    // NB: Base class must be unstashed before we can call allocateVertex().
     GEO_Primitive::stashed(beingstashed, offset);
-    for (int i = 0; i < PT_PER_TET; i++)
-	myVertexOffsets[i] = beingstashed ? GA_INVALID_OFFSET : allocateVertex();
+
+    // This function is used as a way to "stash" and "unstash" a primitive
+    // as an alternative to freeing and reallocating a primitive.
+    // This class doesn't have any data apart from what's in the base class,
+    // but if you add any data, make sure that when beingstashed is true,
+    // any allocated memory gets freed up, and when beingstashed is false,
+    // (which will only happen after having first been called with true),
+    // make sure that the primitive is initialized to a state that is as
+    // if it were freshly constructed.
+    // It should be threadsafe to call this on multiple primitives
+    // in the same detail at the same time.
 }
 
 bool
@@ -127,8 +112,19 @@ GEO_PrimTetra::evaluatePointRefMap(GA_Offset result_vtx,
 				fpreal u, fpreal v, unsigned du,
 				unsigned dv) const
 {
-    map.copyValue(GA_ATTRIB_VERTEX, result_vtx,
-		  GA_ATTRIB_VERTEX, getVertexOffset(0));
+    // The parameter space of a tetrahedron requires 3 coordinates,
+    // (u,v,w), not just (u,v), so this just falls back to picking
+    // the first vertex's values.
+    if (du==0 && dv==0)
+    {
+        map.copyValue(GA_ATTRIB_VERTEX, result_vtx,
+                      GA_ATTRIB_VERTEX, getVertexOffset(0));
+    }
+    else
+    {
+        // Any derivative of a constant value is zero.
+        map.zeroElement(GA_ATTRIB_VERTEX, result_vtx);
+    }
     return true;
 }
 
@@ -136,14 +132,13 @@ GEO_PrimTetra::evaluatePointRefMap(GA_Offset result_vtx,
 void
 GEO_PrimTetra::reverse()
 {
-    for (GA_Size r = 0; r < 2; r++)
-    {
-        GA_Size nr = 3 - r;
-        GA_Offset other = fastVertexOffset(nr);
-
-        myVertexOffsets[nr] = fastVertexOffset(r);
-        myVertexOffsets[r] = other;
-    }
+    // NOTE: We cannot reverse all of the vertices, else the sense
+    //       of the tet is left unchnaged!
+    GA_Size r = 0;
+    GA_Size nr = 3 - r;
+    GA_Offset other = myVertexList.get(nr);
+    myVertexList.set(nr, myVertexList.get(r));
+    myVertexList.set(r, other);
 }
 
 UT_Vector3
@@ -155,10 +150,10 @@ GEO_PrimTetra::computeNormal() const
 fpreal
 GEO_PrimTetra::calcVolume(const UT_Vector3 &) const
 {
-    UT_Vector3 v0 = getParent()->getPos3(vertexPoint(0));
-    UT_Vector3 v1 = getParent()->getPos3(vertexPoint(1));
-    UT_Vector3 v2 = getParent()->getPos3(vertexPoint(2));
-    UT_Vector3 v3 = getParent()->getPos3(vertexPoint(3));
+    UT_Vector3 v0 = getPos3(0);
+    UT_Vector3 v1 = getPos3(1);
+    UT_Vector3 v2 = getPos3(2);
+    UT_Vector3 v3 = getPos3(3);
 
     // Measure signed volume of pyramid (v0,v1,v2,v3) 
     float signedvol = -(v3-v0).dot(cross(v1-v0, v2-v0));
@@ -173,10 +168,10 @@ GEO_PrimTetra::calcArea() const
 {
     fpreal area = 0; // Signed area
 
-    UT_Vector3 v0 = getParent()->getPos3(vertexPoint(0));
-    UT_Vector3 v1 = getParent()->getPos3(vertexPoint(1));
-    UT_Vector3 v2 = getParent()->getPos3(vertexPoint(2));
-    UT_Vector3 v3 = getParent()->getPos3(vertexPoint(3));
+    UT_Vector3 v0 = getPos3(0);
+    UT_Vector3 v1 = getPos3(1);
+    UT_Vector3 v2 = getPos3(2);
+    UT_Vector3 v3 = getPos3(3);
 
     area += cross((v1 - v0), (v2 - v0)).length();
     area += cross((v3 - v1), (v2 - v1)).length();
@@ -193,10 +188,10 @@ GEO_PrimTetra::calcPerimeter() const
 {
     fpreal length = 0;
 
-    UT_Vector3 v0 = getParent()->getPos3(vertexPoint(0));
-    UT_Vector3 v1 = getParent()->getPos3(vertexPoint(1));
-    UT_Vector3 v2 = getParent()->getPos3(vertexPoint(2));
-    UT_Vector3 v3 = getParent()->getPos3(vertexPoint(3));
+    UT_Vector3 v0 = getPos3(0);
+    UT_Vector3 v1 = getPos3(1);
+    UT_Vector3 v2 = getPos3(2);
+    UT_Vector3 v3 = getPos3(3);
 
     length += (v1-v0).length();
     length += (v2-v0).length();
@@ -208,18 +203,12 @@ GEO_PrimTetra::calcPerimeter() const
     return length;
 }
 
-GA_Size
-GEO_PrimTetra::getVertexCount(void) const
-{
-    return PT_PER_TET;
-}
-
 int
 GEO_PrimTetra::detachPoints(GA_PointGroup &grp)
 {
     GA_Size count = 0;
     for (GA_Size i = 0; i < PT_PER_TET; ++i)
-	if (grp.containsOffset(vertexPoint(i)))
+	if (grp.containsOffset(getPointOffset(i)))
 	    count++;
 
     if (count == 0)
@@ -236,7 +225,7 @@ GEO_PrimTetra::dereferencePoint(GA_Offset point, bool dry_run)
 {
     for (GA_Size i = 0; i < PT_PER_TET; ++i)
     {
-	if (vertexPoint(i) == point)
+	if (getPointOffset(i) == point)
 	{
 	    return isDegenerate() ? GA_DEREFERENCE_DEGENERATE : GA_DEREFERENCE_FAIL;
 	}
@@ -250,7 +239,7 @@ GEO_PrimTetra::dereferencePoints(const GA_RangeMemberQuery &point_query, bool dr
     int		count = 0;
     for (GA_Size i = 0; i < PT_PER_TET; ++i)
     {
-	if (point_query.contains(vertexPoint(i)))
+	if (point_query.contains(getPointOffset(i)))
 	{
 	    count++;
 	}
@@ -373,7 +362,7 @@ private:
 static const GA_PrimitiveJSON *
 tetrahedronJSON()
 {
-    static GA_PrimitiveJSON	*theJSON = NULL;
+    static GA_PrimitiveJSON *theJSON = NULL;
 
     if (!theJSON)
 	theJSON = new geo_PrimTetraJSON();
@@ -392,29 +381,27 @@ bool
 GEO_PrimTetra::saveVertexArray(UT_JSONWriter &w,
 		const GA_SaveMap &map) const
 {
-    if (!w.beginUniformArray(PT_PER_TET, UT_JID_INT32))
-	return false;
-    for (int i = 0; i < PT_PER_TET; i++)
-    {
-	int32	v = map.getIndex(fastVertexOffset(i), GA_ATTRIB_VERTEX);
-	if (!w.uniformWrite(v))
-	    return false;
-    }
-    return w.endUniformArray();
+    return myVertexList.jsonVertexArray(w, map);
 }
 
 bool
 GEO_PrimTetra::loadVertexArray(UT_JSONParser &p, const GA_LoadMap &map)
 {
-    GA_Offset vtxoff = map.getVertexOffset();
+    GA_Offset startvtxoff = map.getVertexOffset();
 
-    int nvertex = p.parseUniformArray(myVertexOffsets, PT_PER_TET);
-    for (int i = 0; i < nvertex; i++)
+    int64 vtxoffs[PT_PER_TET];
+    int nvertex = p.parseUniformArray(vtxoffs, PT_PER_TET);
+    if (startvtxoff != GA_Offset(0))
     {
-	if (myVertexOffsets[i] >= 0)
-	    myVertexOffsets[i] += GA_Size(vtxoff);
+        for (int i = 0; i < nvertex; i++)
+        {
+            if (vtxoffs[i] >= 0)
+                vtxoffs[i] += GA_Size(startvtxoff);
+        }
     }
-
+    for (int i = nvertex; i < PT_PER_TET; ++i)
+        vtxoffs[i] = GA_INVALID_OFFSET;
+    myVertexList.set(vtxoffs, PT_PER_TET, GA_Offset(0));
     if (nvertex < PT_PER_TET)
 	return false;
     return true;
@@ -424,39 +411,24 @@ GEO_PrimTetra::loadVertexArray(UT_JSONParser &p, const GA_LoadMap &map)
 int
 GEO_PrimTetra::getBBox(UT_BoundingBox *bbox) const
 {
-    int		 cnt;
-
-    bbox->initBounds(getDetail().getPos3(vertexPoint(0)));
-
-    for (cnt = PT_PER_TET-1; cnt > 0; cnt--)
-    {
-	bbox->enlargeBounds(getDetail().getPos3(vertexPoint(cnt)));
-    }
-
+    bbox->initBounds(getPos3(0));
+    bbox->enlargeBounds(getPos3(1));
+    bbox->enlargeBounds(getPos3(2));
+    bbox->enlargeBounds(getPos3(3));
     return 1;
 }
 
 UT_Vector3
 GEO_PrimTetra::baryCenter() const
 {
-    float	x, y, z;
-    int		i;
+    UT_Vector3 sum(0,0,0);
 
-    x = y = z = 0.0;
+    for (int i = 0; i < PT_PER_TET; ++i)
+        sum += getPos3(i);
 
-    for (i=PT_PER_TET-1; i>=0; i--)
-    {
-	UT_Vector3 pos(getDetail().getPos3(vertexPoint(i)));
-	x += pos.x();
-	y += pos.y();
-	z += pos.z();
-    }
+    sum /= PT_PER_TET;
 
-    x /= PT_PER_TET;
-    y /= PT_PER_TET;
-    z /= PT_PER_TET;
-
-    return UT_Vector3(x, y, z);
+    return sum;
 }
 
 bool
@@ -467,7 +439,7 @@ GEO_PrimTetra::isDegenerate() const
     {
 	for (int j = i+1; j < PT_PER_TET; j++)
 	{
-	    if (vertexPoint(i) == vertexPoint(j))
+	    if (getPointOffset(i) == getPointOffset(j))
 		return true;
 	}
     }
@@ -477,28 +449,18 @@ GEO_PrimTetra::isDegenerate() const
 void
 GEO_PrimTetra::copyPrimitive(const GEO_Primitive *psrc)
 {
-    if (psrc == this) return;
+    if (psrc == this)
+        return;
 
-    const GEO_PrimTetra *src = (const GEO_PrimTetra *)psrc;
-    const GA_IndexMap &points = getParent()->getPointMap();
-    const GA_IndexMap &src_points = src->getParent()->getPointMap();
+    // This sets the number of vertices to be the same as psrc, and wires
+    // the corresponding vertices to the corresponding points.
+    // This class doesn't have any more data, so we didn't need to
+    // override copyPrimitive, but if you add any more data, copy it
+    // below.
+    GEO_Primitive::copyPrimitive(psrc);
 
-    // TODO: Well and good to reuse the attribute handle for all our
-    //       vertices, but we should do so across primitives as well.
-    GA_VertexWrangler vertex_wrangler(*getParent(), *src->getParent());
-
-    for (GA_Size i = 0; i < PT_PER_TET; ++i)
-    {
-        GA_Offset v = fastVertexOffset(i);
-        GA_Offset ptoff = src->vertexPoint(i);
-        if (&points != &src_points)
-        {
-            GA_Index ptidx = src_points.indexFromOffset(ptoff);
-            ptoff = points.offsetFromIndex(ptidx);
-        }
-        wireVertex(v, ptoff);
-        vertex_wrangler.copyAttributeValues(v, src->fastVertexOffset(i));
-    }
+    // Uncomment this to access other data
+    //const GEO_PrimTetra *src = (const GEO_PrimTetra *)psrc;
 }
 
 GEO_Primitive *
@@ -506,115 +468,35 @@ GEO_PrimTetra::copy(int preserve_shared_pts) const
 {
     GEO_Primitive *clone = GEO_Primitive::copy(preserve_shared_pts);
 
-    if (clone)
-    {
-	GEO_PrimTetra	*face = (GEO_PrimTetra*)clone;
-	GA_Offset	 ppt;
+    if (!clone)
+        return nullptr;
 
-	// TODO: Well and good to reuse the attribute handle for all our
-	//       points/vertices, but we should do so across primitives
-	//       as well.
-	GA_ElementWranglerCache	 wranglers(*getParent(),
-					   GA_PointWrangler::INCLUDE_P);
+    // This class doesn't have any more data to copy, so we didn't need
+    // to override this function, but if you add any, copy them here.
 
-	int nvtx = getVertexCount();
+    // Uncomment this to access other data
+    //GEO_PrimTetra *tet = (GEO_PrimTetra*)clone;
 
-	int i;
-
-	if (preserve_shared_pts)
-	{
-	    UT_SparseArray<GA_Offset *>	addedpoints;
-	    GA_Offset			*ppt_ptr;
-
-	    for (i = 0; i < nvtx; i++)
-	    {
-		GA_Offset		 src_ppt = vertexPoint(i);
-		GA_Offset		 v  = face->fastVertexOffset(i);
-		GA_Offset		 sv = fastVertexOffset(i);
-
-		if (!(ppt_ptr = addedpoints(src_ppt)))
-		{
-		    ppt = getParent()->appendPointOffset();
-		    wranglers.getPoint().copyAttributeValues(ppt, src_ppt);
-		    addedpoints.append(src_ppt, new GA_Offset(ppt));
-		}
-		else
-		    ppt = *ppt_ptr;
-		face->wireVertex(v, ppt);
-		wranglers.getVertex().copyAttributeValues(v, sv);
-	    }
-
-	    int dummy_index;
-	    for (i = 0; i < addedpoints.entries(); i++)
-		delete (GA_Offset *)addedpoints.getRawEntry(i, dummy_index);
-	}
-	else
-	{
-	    for (i = 0; i < nvtx; i++)
-	    {
-		GA_Offset	v = face->fastVertexOffset(i);
-		ppt = getParent()->appendPointOffset();
-		face->wireVertex(v, ppt);
-		wranglers.getPoint().copyAttributeValues(ppt, vertexPoint(i));
-		wranglers.getVertex().copyAttributeValues(v, fastVertexOffset(i));
-	    }
-	}
-    }
     return clone;
 }
 
 void
-GEO_PrimTetra::copyUnwiredForMerge(const GA_Primitive *prim_src,
-				       const GA_MergeMap &map)
+GEO_PrimTetra::copyUnwiredForMerge(
+    const GA_Primitive *prim_src,
+    const GA_MergeMap &map)
 {
     UT_ASSERT( prim_src != this );
 
-    const GEO_PrimTetra *src = static_cast<const GEO_PrimTetra *>(prim_src);
+    // This copies the vertex list, with offsets mapped using map.
+    GEO_Primitive::copyUnwiredForMerge(prim_src, map);
 
-    // TODO: It's unfortunate that our constructor always allocates the
-    //       vertices.  An alternative that avoids this creation and
-    //       immediate destruction of these short lived vertices is to
-    //       implement a custom constructor for merging and register it
-    //       with our GA_PrimitiveDefinition.
-    //
-    //       See GA_PrimitiveDefinition::setMergeConstructor() for more.
-    for (int i = 0; i < PT_PER_TET; i++)
-    {
-	if (fastVertexOffset(i) != GA_INVALID_OFFSET)
-	    destroyVertex(fastVertexOffset(i));
-    }
+    // If you add any data that must be copyied from src in order for this
+    // to be a separate but identical copy of src, copy it here,
+    // but make sure it's safe to call copyUnwiredForMerge on multiple
+    // primitives at the same time.
 
-    if (map.isIdentityMap(GA_ATTRIB_VERTEX))
-    {
-	for (int i = 0; i < PT_PER_TET; i++)
-	    myVertexOffsets[i] = src->myVertexOffsets[i];
-    }
-    else
-    {
-	int n = PT_PER_TET;
-	for (int i = 0; i < n; i++)
-	{
-	    // Get source index
-	    GA_Offset sidx = src->fastVertexOffset(i);
-	    // Map to dest
-	    myVertexOffsets[i] = map.mapDestFromSource(GA_ATTRIB_VERTEX, sidx);
-	}
-    }
-}
-
-void
-GEO_PrimTetra::swapVertexOffsets(const GA_Defragment &defrag)
-{
-    GA_Size		nchanged = 0;
-    for (int i = 0; i < PT_PER_TET; i++)
-    {
-	GA_Offset	v = fastVertexOffset(i);
-	if (defrag.hasOffsetChanged(v))
-	{
-	    myVertexOffsets[i] = defrag.mapOffset(v);
-	    nchanged++;
-	}
-    }
+    // Uncomment this to access other data
+    //const GEO_PrimTetra *src = static_cast<const GEO_PrimTetra *>(prim_src);
 }
 
 GEO_PrimTetra *
@@ -622,7 +504,19 @@ GEO_PrimTetra::build(GA_Detail *gdp, bool appendPoints)
 {
     GEO_PrimTetra *tet = static_cast<GEO_PrimTetra *>(gdp->appendPrimitive(GEO_PrimTetra::theTypeId()));
 
-    // NOTE: By design, npts will always be 4 for a tetrahedron.
+    // Add 4 vertices.  The constructor did not add any.
+    GA_Offset vtxoff = gdp->appendVertexBlock(PT_PER_TET);
+    tet->myVertexList.setTrivial(vtxoff, PT_PER_TET);
+    GA_ATITopology *vtx_to_prim = gdp->getTopology().getPrimitiveRef();
+    if (vtx_to_prim)
+    {
+        GA_Offset primoff = tet->getMapOffset();
+        for (GA_Size i = 0; i < PT_PER_TET; i++)
+            vtx_to_prim->setLink(vtxoff+i, primoff);
+    }
+
+    // NOTE: By design, npts will always be 4 (i.e. PT_PER_TET) for a tetrahedron.
+    //       The call to getVertexCount() is just as an example.
     const GA_Size npts = tet->getVertexCount();
     if (appendPoints)
     {
@@ -743,7 +637,7 @@ GEO_PrimTetra::buildBlock(GA_Detail *detail,
         TIMING_LOG("Setting vtx->prm");
     }
 
-    // Set the vertex lists of the polygons
+    // Set the vertex lists of the tets
     UTparallelForLightItems(UT_BlockedRange<GA_Size>(0, ntets),
             geo_SetVertexListsParallel(detail, startprim, startvtx));
 
@@ -805,50 +699,59 @@ GEO_PrimTetra::buildBlock(GA_Detail *detail,
 }
 
 // Static callback for our factory.
-static GA_Primitive *
-geo_newPrimTetra(GA_Detail &detail, GA_Offset offset,
-	const GA_PrimitiveDefinition &)
+static void
+geoNewPrimTetraBlock(
+    GA_Primitive **new_prims,
+    GA_Size nprimitives,
+    GA_Detail &gdp,
+    GA_Offset start_offset,
+    const GA_PrimitiveDefinition &def)
 {
-    return new GEO_PrimTetra(detail, offset);
-}
-
-static GA_Primitive *
-geo_MergeConstructor(
-    const GA_MergeMap &map,
-    GA_Detail &detail,
-    GA_Offset offset,
-    const GA_Primitive &src)
-{
-    return new GEO_PrimTetra(
-        map,
-        detail,
-        offset,
-        static_cast<const GEO_PrimTetra &>(src));
+    if (nprimitives >= 4*GA_PAGE_SIZE)
+    {
+        // Allocate them in parallel if we're allocating many.
+        // This is using the C++11 lambda syntax to make a functor.
+        UTparallelForLightItems(UT_BlockedRange<GA_Offset>(start_offset, start_offset+nprimitives),
+            [new_prims,&gdp,start_offset](const UT_BlockedRange<GA_Offset> &r){
+                GA_Offset primoff(r.begin());
+                GA_Primitive **pprims = new_prims+(primoff-start_offset);
+                GA_Offset endprimoff(r.end());
+                for ( ; primoff != endprimoff; ++primoff, ++pprims)
+                    *pprims = new GEO_PrimTetra(gdp, primoff);
+            });
+    }
+    else
+    {
+        // Allocate them serially if we're only allocating a few.
+        GA_Offset endprimoff(start_offset + nprimitives);
+        for (GA_Offset primoff(start_offset); primoff != endprimoff; ++primoff, ++new_prims)
+            *new_prims = new GEO_PrimTetra(gdp, primoff);
+    }
 }
 
 void
 GEO_PrimTetra::registerMyself(GA_PrimitiveFactory *factory)
 {
     // Ignore double registration
-    if (theDef)
+    if (theDefinition)
 	return;
 
-    theDef = factory->registerDefinition("HDK_Tetrahedron",
-			geo_newPrimTetra,
-			GA_FAMILY_NONE);
+    theDefinition = factory->registerDefinition(
+        "HDK_Tetrahedron",
+        geoNewPrimTetraBlock,
+        GA_FAMILY_NONE,
+        "hdk_tetrahedron");
 
-    theDef->setLabel("hdk_tetrahedron");
-    theDef->setMergeConstructor(geo_MergeConstructor);
     // NOTE: Calling setHasLocalTransform(false) is redundant,
     //       but if your custom primitive has a local transform,
     //       it must call setHasLocalTransform(true).
-    theDef->setHasLocalTransform(false);
-    registerIntrinsics(*theDef);
+    theDefinition->setHasLocalTransform(false);
+    registerIntrinsics(*theDefinition);
 
 #ifndef TETRA_GR_PRIMITIVE
     
     // Register the GT tesselation too (now we know what type id we have)
-    GT_PrimTetraCollect::registerPrimitive(theDef->getId());
+    GT_PrimTetraCollect::registerPrimitive(theDefinition->getId());
     
 #else
 
@@ -861,10 +764,11 @@ GEO_PrimTetra::registerMyself(GA_PrimitiveFactory *factory)
     // Since we're only registering one hook, the priority does not matter.
     const int hook_priority = 0;
     
-    DM_RenderTable::getTable()->registerGEOHook(new GR_PrimTetraHook,
-						theDef->getId(),
-						hook_priority, 
-						collect_type);
+    DM_RenderTable::getTable()->registerGEOHook(
+        new GR_PrimTetraHook,
+        theDefinition->getId(),
+        hook_priority,
+        collect_type);
 #endif
     
 }
@@ -872,16 +776,19 @@ GEO_PrimTetra::registerMyself(GA_PrimitiveFactory *factory)
 int64
 GEO_PrimTetra::getMemoryUsage() const
 {
-    // NOTE: The only memory owned by this primitive is itself.
-    int64 mem = sizeof(*this);
+    // NOTE: The only memory owned by this primitive is itself
+    //       and its base class.
+    int64 mem = sizeof(*this) + getBaseMemoryUsage();
     return mem;
 }
 
 void
 GEO_PrimTetra::countMemory(UT_MemoryCounter &counter) const
 {
-    // NOTE: There's no shared memory in this primitive.
+    // NOTE: There's no shared memory in this primitive,
+    //       apart from possibly in the case class.
     counter.countUnshared(sizeof(*this));
+    countBaseMemory(counter);
 }
 
 static GEO_Primitive *

@@ -190,6 +190,7 @@ GUI_PrimFramework::update(RE_Render		  *r,
 #ifdef HOOK_ON_GEO_PRIMITIVE
     const GT_GEOPrimitive *prim =
 	static_cast<const GT_GEOPrimitive *>(primh.get());
+    (void)prim; // Silence a compiler warning.
 #else
     // Cast the primitive to the appropriate GT_Primitive subclass.
     // Some data, such as the attribute lists, can be queried directly from
@@ -291,10 +292,17 @@ void
 GUI_PrimFramework::render(RE_Render	         *r,
 			  GR_RenderMode	          render_mode,
 			  GR_RenderFlags	  flags,
-			  const GR_DisplayOption *opt,
-			  const RE_MaterialList  *materials)
+			  GR_DrawParms		  draw_parms)
 {
     std::cerr << "Render " << std::endl;
+
+    // draw_parms.opts:		  display options ptr
+    // draw_parms.materials:	  material atlas, containing all materials. The
+    //				  MatID primitive attribute references these by
+    //				  id.
+    // draw_parms.default_mat_id: material to use when MatID = -1
+    // draw_parms.draw_instanced: instanced drawing requested
+    // draw_parms.instance_group: draw instanced with 'instance_group' index
 
     // There are a variety of rendering modes that a primitive can be asked
     // to do. You do not need to support them all. If a render mode is not
@@ -453,19 +461,6 @@ GUI_PrimFramework::render(RE_Render	         *r,
 	// level.
 	break;
     }
-}
-
-void
-GUI_PrimFramework::renderInstances(RE_Render	          *r,
-				   GR_RenderMode	   render_mode,
-				   GR_RenderFlags	   flags,
-				   const GR_DisplayOption *opt,
-				   const RE_MaterialList  *materials,
-				   int instance_group)
-{
-    // called when instanced at the object level. Often render() and
-    // renderInstances() call into a common render method to reduce code
-    // duplication.
 }
 
 int

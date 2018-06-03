@@ -93,14 +93,7 @@ public:
     virtual void	render(RE_Render	      *r,
 			       GR_RenderMode	       render_mode,
 			       GR_RenderFlags	       flags,
-			       const GR_DisplayOption *opt,
-			       const RE_MaterialList  *materials);
-    virtual void	renderInstances(RE_Render *r,
-					GR_RenderMode render_mode,
-					GR_RenderFlags flags,
-					const GR_DisplayOption *opt,
-					const RE_MaterialList *materials,
-					int render_instance);
+			       GR_DrawParms	       dp);
     virtual void	renderDecoration(RE_Render *r,
 					 GR_Decoration decor,
 					 const GR_DecorationParms &parms);
@@ -112,6 +105,7 @@ public:
 private:
     int	myID;
     RE_Geometry *myGeo;
+    bool myInstancedFlag;
     
 #ifdef TETRA_GR_PRIM_COLLECTION
     GA_IndexArray myPrimIndices;

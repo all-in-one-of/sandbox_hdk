@@ -387,7 +387,7 @@ EUC_ExprIntersect::evaluateSubclass(EUC_ObjectList &result,
 	    else
 	    {
 		// Line-Circle isect.
-		UT_Vector2		p, v, center, isect;
+		UT_Vector2		p, v, center;
 		float			radius, a, b, c, t0, t1;
 		
 		// x = p.x + v.x * t

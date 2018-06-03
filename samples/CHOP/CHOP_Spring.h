@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015
+ * Copyright (c) 2017
  *	Side Effects Software Inc.  All rights reserved.
  *
  * Redistribution and use of Houdini Development Kit samples in source and
@@ -70,7 +70,8 @@ public:
     virtual bool		 evalVariableValue(
 				    UT_String &v, int i, int thread)
 				 {
-				     return evalVariableValue(v, i, thread);
+				     return CHOP_Realtime::evalVariableValue(
+								v, i, thread);
 				 }
 
     virtual int          	 usesScope() const { return 1; };

@@ -11,9 +11,9 @@
  *	Canada   M5V 3E7
  *	416-504-9876
  *
- * NAME:	GEO_PrimTetra.h ( GEO Library, C++)
+ * NAME:	GEO_PrimTetra.h (HDK Sample, C++)
  *
- * COMMENTS:	This is the base class for all triangle mesh types.
+ * COMMENTS:	This is an HDK example for making a custom tetrahedron primitive type.
  */
 
 #ifndef __HDK_GEO_PrimTetra__
@@ -27,31 +27,19 @@
 #include <UT/UT_ParallelUtil.h>
 #include <UT/UT_Vector3.h>
 
-class GA_Detail;
-
 namespace HDK_Sample {
 
 class GEO_PrimTetra : public GEO_Primitive
 {
 protected:
-    /// NOTE: The destructor should only be called from subclass
-    ///       destructors.
+    /// NOTE: The destructor should only be called from GA_PrimitiveList,
+    ///       via a GA_Primitive pointer.
     virtual ~GEO_PrimTetra();
-
 public:
-    /// NOTE: The constructor should only be called from subclass
-    ///       constructors.
-    GEO_PrimTetra(GA_Detail &d, GA_Offset offset = GA_INVALID_OFFSET);
-
-    /// NOTE: The constructor should only be called from subclass
-    ///       constructors.
-    /// This one is for merging, and *must* be threadsafe!
-    /// It only needs to be provided if the main constructor modifies
-    /// the detail or is thread-unsafe in other ways.
-    GEO_PrimTetra(const GA_MergeMap &map,
-                  GA_Detail &detail,
-                  GA_Offset offset,
-                  const GEO_PrimTetra &src);
+    /// NOTE: To create a new primitive owned by the detail, call
+    ///       GA_Detail::appendPrimitive or appendPrimitiveBlock on
+    ///       the detail, not this constructor.
+    GEO_PrimTetra(GA_Detail &d, GA_Offset offset);
 
     /// @{
     /// Required interface methods
@@ -62,12 +50,6 @@ public:
     virtual void	copyPrimitive(const GEO_Primitive *src);
     virtual void	copyUnwiredForMerge(const GA_Primitive *src,
 					    const GA_MergeMap &map);
-
-    // Query the number of vertices in the array. This number may be smaller
-    // than the actual size of the array.
-    virtual GA_Size	getVertexCount() const;
-    virtual GA_Offset	getVertexOffset(GA_Size index) const
-			    { return fastVertexOffset(index); }
 
     // Take the whole set of points into consideration when applying the
     // point removal operation to this primitive. The method returns 0 if
@@ -84,9 +66,6 @@ public:
 						const GA_RangeMemberQuery &pt_q,
 						bool dry_run=false);
     virtual const GA_PrimitiveJSON	*getJSON() const;
-
-    /// Defragmentation
-    virtual void	swapVertexOffsets(const GA_Defragment &defrag);
 
     /// Evalaute a point given a u,v coordinate (with derivatives)
     virtual bool	evaluatePointRefMap(GA_Offset result_vtx,
@@ -108,9 +87,6 @@ public:
 
     // Have we been deactivated and stashed?
     virtual void	stashed(bool beingstashed, GA_Offset offset=GA_INVALID_OFFSET);
-
-    // We need to invalidate the vertex offsets
-    virtual void	clearForDeletion();
     /// @}
 
     /// @{
@@ -133,42 +109,29 @@ public:
 				const GA_LoadMap &map);
     /// @}
 
-    /// Method to perform quick lookup of vertex without the virtual call
-    GA_Offset	fastVertexOffset(GA_Size index) const
-    {
-	UT_ASSERT_P(index < 4);
-	return (GA_Offset) myVertexOffsets[index];
-    }
-
-    /// Both methods find the index of the given vertex (vtx or the vertex
-    /// that contains ppt). Return -1 if not found. 
-    GA_Size	findVertex(GA_Offset vtxoff) const
+    /// Finds where the specified vertex offset is in this primitive's
+    /// vertex list.
+    GA_Size findVertex(GA_Offset vtxoff) const
     { 
 	for (GA_Size i = 0; i < 4; i++)
 	{
-	    if (fastVertexOffset(i) == vtxoff)
+	    if (getVertexOffset(i) == vtxoff)
 		return i;
 	}
 	return -1;
     }
-    GA_Size	findPoint(GA_Offset ptoff) const
+
+    /// Finds where in this primitive's vertex list, some vertex
+    /// is wired to the specified point offset.
+    GA_Size findPoint(GA_Offset ptoff) const
     {
 	for (GA_Size i = 0; i < 4; i++)
 	{
-	    if (vertexPoint(i) == ptoff)
+	    if (getPointOffset(i) == ptoff)
 		return i;
 	}
 	return -1;
     }
-    void	setVertexPoint(GA_Size i, GA_Offset pt)
-    {
-	if (i < 4)
-	    wireVertex(fastVertexOffset(i), pt);
-    }
-
-    /// @warning vertexPoint() doesn't check the bounds.  Use with caution.
-    GA_Offset		vertexPoint(GA_Size i) const
-    { return getDetail().vertexPoint(fastVertexOffset(i)); }
 
     /// Report approximate memory usage.
     virtual int64 getMemoryUsage() const;
@@ -179,14 +142,14 @@ public:
     virtual void countMemory(UT_MemoryCounter &counter) const;
 
     /// Allows you to find out what this primitive type was named.
-    static GA_PrimitiveTypeId	 theTypeId() { return theDef->getId(); }
+    static const GA_PrimitiveTypeId &theTypeId() { return theDefinition->getId(); }
 
     /// Must be invoked during the factory callback to add us to the
     /// list of primitives
-    static void		registerMyself(GA_PrimitiveFactory *factory);
+    static void registerMyself(GA_PrimitiveFactory *factory);
 
     virtual const GA_PrimitiveDefinition &getTypeDef() const
-    { return *theDef; }
+    { return *theDefinition; }
 
     /// @{
     /// Conversion functions
@@ -226,7 +189,7 @@ public:
 				int ignoretrim = 1) const;
 
     // NOTE: This functor class must be in the scope of GEO_PrimTetra
-    //       so that it can access myVertexOffsets.
+    //       so that it can access myVertexList.
     //       It has to be public so that UTparallelForLightItems
     //       can be instantiated for GCC with it.
     class geo_SetVertexListsParallel
@@ -251,8 +214,8 @@ public:
                     break;
                 GA_Offset offset = myStartPrim + i;
                 GEO_PrimTetra *tet = (GEO_PrimTetra *)myPrimitiveList.get(offset);
-                for (int j = 0; j < 4; ++j)
-                    tet->myVertexOffsets[j] = GA_Size(vtxoff++);
+                tet->myVertexList.setTrivial(vtxoff, 4);
+                vtxoff += 4;
             }
         }
 
@@ -264,14 +227,11 @@ public:
 
 protected:
     /// Declare methods for implementing intrinsic attributes.
-    GA_DECLARE_INTRINSICS()
+    GA_DECLARE_INTRINSICS(GA_NO_OVERRIDE)
 
-    /// This is designed to match with GA_OffsetList which also
-    /// uses only 32bit storage for now.
-    int32			myVertexOffsets[4];
-
+    void createVertices() const;
 private:
-    static GA_PrimitiveDefinition	 *theDef;
+    static GA_PrimitiveDefinition *theDefinition;
 };
 
 }

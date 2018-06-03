@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015
+ * Copyright (c) 2017
  *	Side Effects Software Inc.  All rights reserved.
  *
  * Redistribution and use of Houdini Development Kit samples in source and
@@ -126,13 +126,13 @@ SIM_RadialEmit::solveGasSubclass(SIM_Engine &engine,
     }
 
     // Assume destination is an attribute we need to modify.
-    GU_DetailHandleAutoWriteLock gdl(geo->lockGeometry());
-    GU_Detail           	*gdp = gdl.getGdp();
+    SIM_GeometryAutoWriteLock lock(geo);
+    GU_Detail &gdp = lock.getGdp();
     UT_WorkBuffer  msg;
     uint			 seed = getSeed();
 
     // Velocity to write to.
-    GA_RWHandleV3 v_h(gdp, GA_ATTRIB_POINT, "v");
+    GA_RWHandleV3 v_h(&gdp, GA_ATTRIB_POINT, "v");
     if (v_h.isInvalid())
     {
 	// While this alert can be useful, it often ends
@@ -148,7 +148,7 @@ SIM_RadialEmit::solveGasSubclass(SIM_Engine &engine,
 
 	while (born --> 0)
 	{
-	    GA_Offset		newpt = gdp->appendPointOffset();
+	    GA_Offset		newpt = gdp.appendPointOffset();
 
 	    UT_Vector3		pos, vel;
 
@@ -168,14 +168,12 @@ SIM_RadialEmit::solveGasSubclass(SIM_Engine &engine,
 	    pos *= distrange.x() + SYSrandom(seed) * (distrange.y()-distrange.x());
 	    pos += center;
 
-	    gdp->setPos3(newpt, pos);
+	    gdp.setPos3(newpt, pos);
 
 	    vel *= speedrange.x() + SYSrandom(seed) * (speedrange.y()-speedrange.x());
 	    v_h.set(newpt, vel);
 	}
     }
-
-    geo->releaseGeometry();
 
     // Successful cook
     return true;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015
+ * Copyright (c) 2017
  *	Side Effects Software Inc.  All rights reserved.
  *
  * Redistribution and use of Houdini Development Kit samples in source and
@@ -193,6 +193,8 @@ newObjectOperator(OP_OperatorTable *table)
 {
     table->addOperator(new OP_Operator("hdk_shake", "Shake",
 		       OBJ_Shake::myConstructor,
-		       OBJ_Shake::buildTemplatePair(0), 0, 1,
+		       OBJ_Shake::buildTemplatePair(0),
+		       OBJ_Shake::theChildTableName,
+		       0, 1,
 		       0));
 }

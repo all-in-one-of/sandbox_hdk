@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015
+ * Copyright (c) 2017
  *	Side Effects Software Inc.  All rights reserved.
  *
  * Redistribution and use of Houdini Development Kit samples in source and
@@ -210,7 +210,7 @@ SOP_IKSample::cookMySop(OP_Context &context)
 	    return error();
 
 	// Create the "orient" attribute for storing our solved rotations.
-	GA_Defaults def(4, GA_STORE_REAL64,
+	GA_Defaults def(GA_STORE_REAL64, 4,
 		fpreal64(0), fpreal64(0), fpreal64(0), fpreal64(1) );
 	orient_attrib = GA_RWHandleQ(gdp->addFloatTuple(GA_ATTRIB_POINT,"orient", 4, def));
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015
+ * Copyright (c) 2017
  *	Side Effects Software Inc.  All rights reserved.
  *
  * Redistribution and use of Houdini Development Kit samples in source and
@@ -62,7 +62,7 @@ protected:
     /// Public methods needed by MSS:
 public:
     /// Finds the geometry to do the intersection with.
-    const GU_Detail		*getIsectGdp();
+    const GU_Detail		*getIsectGdp(fpreal t);
     
     /// If the action of the brush will change point positions,
     /// we should set this to 1.  We create geometry, but leave point

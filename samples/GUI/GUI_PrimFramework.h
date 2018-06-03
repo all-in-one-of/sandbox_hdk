@@ -120,16 +120,7 @@ public:
     virtual void	render(RE_Render	      *r,
 			       GR_RenderMode	       render_mode,
 			       GR_RenderFlags	       flags,
-			       const GR_DisplayOption *opt,
-			       const RE_MaterialList  *materials);
-
-    /// Similar to render(), but with object instances.
-    virtual void	renderInstances(RE_Render	       *r,
-					GR_RenderMode		render_mode,
-					GR_RenderFlags		flags,
-					const GR_DisplayOption *opt,
-					const RE_MaterialList  *materials,
-					int instance_group);
+			       GR_DrawParms	       draw_parms);
     
     /// Called when decoration 'decor' is required to be rendered.
     virtual void	 renderDecoration(RE_Render *r,

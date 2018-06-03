@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015
+ * Copyright (c) 2017
  *	Side Effects Software Inc.  All rights reserved.
  *
  * Redistribution and use of Houdini Development Kit samples in source and
@@ -29,6 +29,7 @@
 #include <UT/UT_DSOVersion.h>
 #include <GU/GU_Detail.h>
 #include "VRAY_DemoBox.h"
+#include <VRAY/VRAY_ProceduralFactory.h>
 
 using namespace HDK_Sample;
 
@@ -40,16 +41,21 @@ static VRAY_ProceduralArg	theArgs[] = {
     VRAY_ProceduralArg()
 };
 
-VRAY_Procedural *
-allocProcedural(const char *)
+class ProcDef : public VRAY_ProceduralFactory::ProcDefinition
 {
-    return new VRAY_DemoBox();
-}
+public:
+    ProcDef()
+	: VRAY_ProceduralFactory::ProcDefinition("demobox")
+    {
+    }
+    virtual VRAY_Procedural	*create() const { return new VRAY_DemoBox(); }
+    virtual VRAY_ProceduralArg	*arguments() const { return theArgs; }
+};
 
-const VRAY_ProceduralArg *
-getProceduralArgs(const char *)
+void
+registerProcedural(VRAY_ProceduralFactory *factory)
 {
-    return theArgs;
+    factory->insert(new ProcDef);
 }
 
 VRAY_DemoBox::VRAY_DemoBox()

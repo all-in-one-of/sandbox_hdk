@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015
+ * Copyright (c) 2017
  *	Side Effects Software Inc.  All rights reserved.
  *
  * Redistribution and use of Houdini Development Kit samples in source and
@@ -302,7 +302,7 @@ COP2_SampleGenerator::generateTile(COP2_Context &context, TIL_TileList *tiles)
 	writeFPtoTile(tiles, dest, ti);
     }
 
-    delete dest;
+    delete [] dest;
     
     return error();
 }

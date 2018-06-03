@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015
+ * Copyright (c) 2017
  *	Side Effects Software Inc.  All rights reserved.
  *
  * Redistribution and use of Houdini Development Kit samples in source and
@@ -405,9 +405,10 @@ OP_ERROR
 SOP_CustomBrush::save(
     std::ostream &os,
     const OP_SaveFlags &saveflags,
-    const char *path_prefix)
+    const char *path_prefix,
+    const UT_String &name_override)
 {
-    if(SOP_Node::save(os, saveflags, path_prefix) >= UT_ERROR_ABORT)
+    if(SOP_Node::save(os, saveflags, path_prefix, name_override) >= UT_ERROR_ABORT)
 	return error();
 
     // create a new packet for our paint

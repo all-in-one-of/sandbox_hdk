@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015
+ * Copyright (c) 2017
  *	Side Effects Software Inc.  All rights reserved.
  *
  * Redistribution and use of Houdini Development Kit samples in source and
@@ -82,7 +82,8 @@ protected:
 
     // save the SOP's data (including the applied paint)
     virtual OP_ERROR save(std::ostream &os, const OP_SaveFlags &flags,
-			  const char *path_prefix);
+			  const char *path_prefix,
+			  const UT_String &name_override = UT_String());
     // load the SOP's data (including the applied paint)
     virtual bool load(UT_IStream &is, const char *extension,
 		      const char *path);

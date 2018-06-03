@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015
+ * Copyright (c) 2017
  *	Side Effects Software Inc.  All rights reserved.
  *
  * Redistribution and use of Houdini Development Kit samples in source and
@@ -41,6 +41,8 @@ newObjectOperator(OP_OperatorTable *table)
 {
     table->addOperator(new OP_Operator("hdk_lamp", "Lamp",
 		       OBJ_Light::myConstructor,
-		       OBJ_Light::getTemplateList(OBJ_PARMS_PLAIN), 0, 1,
+		       OBJ_Light::getTemplateList(OBJ_PARMS_PLAIN),
+		       OBJ_Light::theChildTableName,
+		       0, 1,
 		       0));
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015
+ * Copyright (c) 2017
  *	Side Effects Software Inc.  All rights reserved.
  *
  * Redistribution and use of Houdini Development Kit samples in source and
@@ -209,7 +209,7 @@ sopAddSkinWeights(const GU_AgentRig &rig, const GU_DetailHandle &shape)
     // rig transforms.
     int num_regions = (SOP_JOINT_END - SOP_JOINT_BEGIN);
     GEO_Detail::geo_NPairs num_pairs_per_pt(num_regions);
-    GA_Attribute *capt = gdp->addPointCaptureAttribute(num_pairs_per_pt);
+    GA_RWAttributeRef capt = gdp->addPointCaptureAttribute(num_pairs_per_pt);
     int regions_i = -1;
     GA_AIFIndexPairObjects *regions
 	= GEO_AttributeCaptureRegion::getBoneCaptureRegionObjects(
@@ -301,8 +301,8 @@ sopCreateShapeLib(const char *path, const GU_AgentRig &rig)
 static GU_AgentLayerPtr
 sopCreateDefaultLayer(
 	const char *path,
-	const GU_AgentRig &rig,
-	const GU_AgentShapeLib &shapelib)
+	const GU_AgentRigPtr &rig,
+	const GU_AgentShapeLibPtr &shapelib)
 {
     UT_StringArray shape_names;
     UT_IntArray transform_indices;
@@ -331,8 +331,8 @@ sopCreateDefaultLayer(
 static GU_AgentLayerPtr
 sopCreateCollisionLayer(
 	const char *path,
-	const GU_AgentRig &rig,
-	const GU_AgentShapeLib &shapelib)
+	const GU_AgentRigPtr &rig,
+	const GU_AgentShapeLibPtr &shapelib)
 {
     UT_StringArray shape_names;
     UT_IntArray transform_indices;
@@ -367,7 +367,7 @@ sopAddTrack(CL_Clip &chans, const GU_AgentRig &rig, int i, const char *trs_name)
 
 // Create some bouncy animation for the agent
 static GU_AgentClipPtr
-sopCreateBounceClip(CL_Clip& chans, const GU_AgentRig &rig, fpreal height)
+sopCreateBounceClip(CL_Clip& chans, const GU_AgentRigPtr &rig, fpreal height)
 {
     int num_samples = chans.getTrackLength();
 
@@ -376,8 +376,8 @@ sopCreateBounceClip(CL_Clip& chans, const GU_AgentRig &rig, fpreal height)
     //	    Translate:	tx ty tz
     //	    Rotate:	rx ry rz (euler angles in degrees, XYZ rotation order)
     //	    Scale:	sx sy sz
-    fpreal *ty = sopAddTrack(chans, rig, SOP_PARENT_RIG_INDEX, "ty");
-    fpreal *sy = sopAddTrack(chans, rig, SOP_PARENT_RIG_INDEX, "sy");
+    fpreal *ty = sopAddTrack(chans, *rig, SOP_PARENT_RIG_INDEX, "ty");
+    fpreal *sy = sopAddTrack(chans, *rig, SOP_PARENT_RIG_INDEX, "sy");
     for (int i = 0; i < num_samples; ++i)
     {
 	ty[i] = height * sin(i * M_PI / (num_samples-1));
@@ -387,8 +387,8 @@ sopCreateBounceClip(CL_Clip& chans, const GU_AgentRig &rig, fpreal height)
 
     // Set the ty of the 'child' transform. Note that these transforms here are
     // in local space.
-    fpreal *tz = sopAddTrack(chans, rig, SOP_CHILD_RIG_INDEX, "tz");
-    ty = sopAddTrack(chans, rig, SOP_CHILD_RIG_INDEX, "ty");
+    fpreal *tz = sopAddTrack(chans, *rig, SOP_CHILD_RIG_INDEX, "tz");
+    ty = sopAddTrack(chans, *rig, SOP_CHILD_RIG_INDEX, "ty");
     for (int i = 0; i < num_samples; ++i)
     {
 	ty[i] = 2.0;					// sphere diameter
@@ -426,18 +426,18 @@ SOP_BouncyAgent::createDefinition(fpreal t) const
 	return nullptr;
 
     GU_AgentLayerPtr default_layer = sopCreateDefaultLayer(path,
-							   *rig, *shapelib);
+							   rig, shapelib);
     if (!default_layer)
 	return nullptr;
 
     GU_AgentLayerPtr collision_layer = sopCreateCollisionLayer(path,
-							       *rig, *shapelib);
+							       rig, shapelib);
     if (!collision_layer)
 	return nullptr;
 
     CL_Clip chans(CHgetManager()->getSample(CLIPLENGTH(t)));
     chans.setSampleRate(CHgetManager()->getSamplesPerSec());
-    GU_AgentClipPtr clip = sopCreateBounceClip(chans, *rig, HEIGHT(t));
+    GU_AgentClipPtr clip = sopCreateBounceClip(chans, rig, HEIGHT(t));
     if (!clip)
 	return nullptr;
 

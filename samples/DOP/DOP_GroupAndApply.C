@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015
+ * Copyright (c) 2017
  *	Side Effects Software Inc.  All rights reserved.
  *
  * Redistribution and use of Houdini Development Kit samples in source and
@@ -164,7 +164,8 @@ DOP_GroupAndApply::processObjectsSubclass(fpreal time, int,
 }
 
 void
-DOP_GroupAndApply::getInputInfoSubclass(int inputidx, DOP_InOutInfo &info)
+DOP_GroupAndApply::getInputInfoSubclass(int inputidx,
+	DOP_InOutInfo &info) const
 {
     // Our first input is an object input.
     // Our remaining inputs are data inputs.
@@ -175,7 +176,8 @@ DOP_GroupAndApply::getInputInfoSubclass(int inputidx, DOP_InOutInfo &info)
 }
 
 void
-DOP_GroupAndApply::getOutputInfoSubclass(int /*outputidx*/, DOP_InOutInfo &info)
+DOP_GroupAndApply::getOutputInfoSubclass(int outputidx,
+	DOP_InOutInfo &info) const
 {
     // Our single output is an object output.
     info = DOP_InOutInfo(DOP_INOUT_OBJECTS, false);

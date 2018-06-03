@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015
+ * Copyright (c) 2017
  *	Side Effects Software Inc.  All rights reserved.
  *
  * Redistribution and use of Houdini Development Kit samples in source and
@@ -54,14 +54,14 @@ usage(const char *program)
 
 static void
 fillPixel(IMG_DeepPixelWriter &writer, IMG3D_Manager &i3d, 
-	  const UT_Vector4 &orig, const UT_Vector3 &dir,
+	  const UT_Vector3 &orig, const UT_Vector3 &dir,
 	  float dist, float step, float tau)
 {
     float	pixel[3];
     float	den, pden, zval, zinc;
     int		i, nsteps;
     UT_Vector3	p0, p1;
-    UT_Vector3	i0, i1;
+    UT_Vector3	i1;
 
     // Find the interval we need to sample
     p0 = orig;
@@ -109,8 +109,8 @@ main(int argc, char *argv[])
     IMG_DeepShadow	 dsm;
     IMG3D_Manager	 i3d;
     UT_DMatrix4		 trans;
-    UT_Vector4		 orig;
-    UT_Vector3		 dir, axis;
+    UT_Vector3		 orig;
+    UT_Vector3		 dir;
     float		 dist, step, zoom, xwin, ywin, tau, orthow;
     const char		*fname;
     const char		*iname;
@@ -220,8 +220,7 @@ main(int argc, char *argv[])
     IMG_DeepPixelWriter writer(dsm);
     if (!ortho)
     {
-	orig = UT_Vector4(0, 0, 0, 1);
-	orig *= trans;
+	trans.getTranslates(orig);
 	for (j = 0; j < yres; j++)
 	{
 	    for (i = 0; i < xres; i++)
@@ -239,7 +238,7 @@ main(int argc, char *argv[])
     else
     {
 	dir = UT_Vector3(0, 0, -1);
-	dir *= UT_DMatrix3(trans);
+	dir.rowVecMult3(trans);
 	for (j = 0; j < yres; j++)
 	{
 	    for (i = 0; i < xres; i++)

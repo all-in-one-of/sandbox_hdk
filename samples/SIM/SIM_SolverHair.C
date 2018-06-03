@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015
+ * Copyright (c) 2017
  *	Side Effects Software Inc.  All rights reserved.
  *
  * Redistribution and use of Houdini Development Kit samples in source and
@@ -156,8 +156,8 @@ SIM_SolverHair::solveHair(SIM_GeometryCopy &hairgeo,
 			  const SIM_Object &object,
 			  const SIM_Time &timestep) const
 {
-    GU_DetailHandleAutoWriteLock gdl(hairgeo.lockGeometry());
-    GU_Detail &gdp = *gdl.getGdp();
+    SIM_GeometryAutoWriteLock lock(&hairgeo);
+    GU_Detail &gdp = lock.getGdp();
 
     UT_DMatrix4 xform;
     hairgeo.getTransform(xform);
@@ -269,16 +269,14 @@ SIM_SolverHair::solveHair(SIM_GeometryCopy &hairgeo,
 	    ++primit;
 	}
     }
-
-    hairgeo.releaseGeometry();
 }
 
 void
 SIM_SolverHair::createHairFromSource(SIM_GeometryCopy &hairgeo,
 				     const SIM_ObjectArray &srcobjs) const
 {
-    GU_DetailHandleAutoWriteLock gdl(hairgeo.lockGeometry());
-    GU_Detail &gdp = *gdl.getGdp();
+    SIM_GeometryAutoWriteLock lock(&hairgeo);
+    GU_Detail &gdp = lock.getGdp();
 
     for (exint geonum = 0; geonum < srcobjs.entries(); geonum++)
     {
@@ -308,8 +306,6 @@ SIM_SolverHair::createHairFromSource(SIM_GeometryCopy &hairgeo,
 	    }
 	}
     }
-
-    hairgeo.releaseGeometry();
 }
 
 SIM_Solver::SIM_Result

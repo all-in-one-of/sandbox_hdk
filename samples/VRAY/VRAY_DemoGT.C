@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015
+ * Copyright (c) 2017
  *	Side Effects Software Inc.  All rights reserved.
  *
  * Redistribution and use of Houdini Development Kit samples in source and
@@ -38,6 +38,7 @@
 #include <GT/GT_DANumeric.h>
 #include <GT/GT_DAConstantValue.h>
 #include "VRAY_DemoGT.h"
+#include <VRAY/VRAY_ProceduralFactory.h>
 
 using namespace HDK_Sample;
 
@@ -52,16 +53,21 @@ static VRAY_ProceduralArg	theArgs[] = {
     VRAY_ProceduralArg()
 };
 
-VRAY_Procedural *
-allocProcedural(const char *)
+class ProcDef : public VRAY_ProceduralFactory::ProcDefinition
 {
-    return new VRAY_DemoGT();
-}
+public:
+    ProcDef()
+	: VRAY_ProceduralFactory::ProcDefinition("demogt")
+    {
+    }
+    virtual VRAY_Procedural	*create() const { return new VRAY_DemoGT(); }
+    virtual VRAY_ProceduralArg	*arguments() const { return theArgs; }
+};
 
-const VRAY_ProceduralArg *
-getProceduralArgs(const char *)
+void
+registerProcedural(VRAY_ProceduralFactory *factory)
 {
-    return theArgs;
+    factory->insert(new ProcDef);
 }
 
 VRAY_DemoGT::VRAY_DemoGT()
@@ -252,7 +258,7 @@ testBox(const UT_BoundingBox &box, fpreal32 maxwidth)
 {
     GT_BuilderStatus	err;
     GT_PrimitiveHandle	prim;
-    fpreal16		clr[3] = { .3, .5, 1 };
+    fpreal16		clr[3] = { .3f, .5f, 1.f };
     prim = GT_PrimitiveBuilder::wireBox(err, box,
 	    GT_VariadicAttributes()
 		<< GT_Attribute("constant fpreal32 width", &maxwidth)

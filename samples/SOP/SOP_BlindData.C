@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015
+ * Copyright (c) 2017
  *	Side Effects Software Inc.  All rights reserved.
  *
  * Redistribution and use of Houdini Development Kit samples in source and
@@ -102,14 +102,14 @@ static const char *theExtension = "mydata";
 
 OP_ERROR
 SOP_BlindData::save(std::ostream &os, const OP_SaveFlags &flags,
-                    const char *path_prefix)
+                    const char *path_prefix, const UT_String &name_override)
 {
     UT_CPIO packet;
 
     clearErrors();
 
     // First, let the base class save its stuff.
-    if (SOP_Node::save(os, flags, path_prefix) >= UT_ERROR_ABORT)
+    if (SOP_Node::save(os, flags, path_prefix, name_override) >= UT_ERROR_ABORT)
         return error();
 
     UT_OStringStream ts;

@@ -71,7 +71,7 @@ GUI_PolygonNormalShade::filterPrimitive(const GT_PrimitiveHandle &gt_prm,
 					GR_PrimAcceptResult  &processed)
 {
     GT_PrimitiveHandle ph;
-    
+
     if(!info->getDisplayOption()->getUserOptionState(NCD_OPTION))
     {
 	// we're interested in this prim, but are not doing anything with it
@@ -167,6 +167,7 @@ GUI_PolygonNormalShade::filterPrimitive(const GT_PrimitiveHandle &gt_prm,
 					mesh->getUniformAttributes(),
 					mesh->getDetailAttributes());
 	}
+	processed = GR_PROCESSED;
     }
 
     // return a new polygon mesh with modified Cd attribute.

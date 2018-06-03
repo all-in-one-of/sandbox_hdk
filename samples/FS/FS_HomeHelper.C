@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015
+ * Copyright (c) 2017
  *	Side Effects Software Inc.  All rights reserved.
  *
  * Redistribution and use of Houdini Development Kit samples in source and
@@ -382,7 +382,8 @@ FS_HomeReadHelper::splitIndexFileSectionPath(const char *source_section_path,
 {
 #ifdef FS_HOMEREADER_HANDLE_OPTIONS
     // We should be splitting only our own paths.
-    if( strncmp(source_section_path, HOME_SIGNATURE, HOME_SIGNATURE_LEN) != 0 )
+    if( !source_section_path ||
+	strncmp(source_section_path, HOME_SIGNATURE, HOME_SIGNATURE_LEN) != 0 )
 	return false;
 
     // If the index file section sparator (ie, the question mark '?') has

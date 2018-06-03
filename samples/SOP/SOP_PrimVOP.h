@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015
+ * Copyright (c) 2017
  *	Side Effects Software Inc.  All rights reserved.
  *
  * Redistribution and use of Houdini Development Kit samples in source and
@@ -62,6 +62,14 @@ public:
     /// Code generation variables.
     virtual bool	 evalVariableValue(
 				UT_String &value, int index, int thread);
+
+    // Add virtual overload that delegates to the super class to avoid
+    // shadow warnings.
+    virtual bool	 evalVariableValue(fpreal &v, int i, int thread)
+			    { return SOP_Node::evalVariableValue(v,i,thread); }
+
+    static const char	*theChildTableName;
+
 protected:
     virtual OP_ERROR	 cookMySop   (OP_Context &context);
 

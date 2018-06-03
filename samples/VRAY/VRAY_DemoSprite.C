@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015
+ * Copyright (c) 2017
  *	Side Effects Software Inc.  All rights reserved.
  *
  * Redistribution and use of Houdini Development Kit samples in source and
@@ -27,6 +27,7 @@
  */
 
 #include "VRAY_DemoSprite.h"
+#include <VRAY/VRAY_ProceduralFactory.h>
 
 #include <VRAY/VRAY_IO.h>
 
@@ -39,7 +40,6 @@
 #include <UT/UT_Defines.h>
 #include <SYS/SYS_Floor.h>
 #include <SYS/SYS_Math.h>
-
 
 #define MIN_CHUNK		8
 #define SPRITE_LIMIT		1000
@@ -82,18 +82,22 @@ static VRAY_ProceduralArg theArgs[] = {
     VRAY_ProceduralArg(),
 };
 
-// External entry point used to create this procedural
-VRAY_Procedural *
-allocProcedural(const char *)
+class ProcDef : public VRAY_ProceduralFactory::ProcDefinition
 {
-    return new VRAY_DemoSprite();
-}
+public:
+    ProcDef()
+	: VRAY_ProceduralFactory::ProcDefinition("demosprite")
+    {
+    }
+    virtual VRAY_Procedural	*create() const
+				    { return new VRAY_DemoSprite(); }
+    virtual VRAY_ProceduralArg	*arguments() const { return theArgs; }
+};
 
-// External entry point used to create this procedural's arguments
-const VRAY_ProceduralArg *
-getProceduralArgs(const char *)
+void
+registerProcedural(VRAY_ProceduralFactory *factory)
 {
-    return theArgs;
+    factory->insert(new ProcDef);
 }
 
 static void
@@ -248,7 +252,7 @@ VRAY_DemoSprite::initialize(const UT_BoundingBox *box)
     UT_BoundingBox	 tbox, tvbox;
     const GU_Detail	*gdp;
     UT_Matrix4		 xform;
-    UT_String		 str;
+    UT_StringHolder	 str;
     int			 vblur;
 
     myParms = new VRAY_DemoSpriteParms;
@@ -448,7 +452,7 @@ makeSpritePoly(GU_Detail *gdp, const GU_Detail *src, UT_IntArray &points,
 	if (parms.mySpriteShopH.isValid())
 	{
 	    shoph = GA_RWHandleS(gdp->addStringTuple(
-		GA_ATTRIB_PRIMITIVE, "shop_materialpath", 1));
+		GA_ATTRIB_PRIMITIVE, GEO_STD_ATTRIB_MATERIAL, 1));
 
 	    if (parms.mySpriteTexH.isValid())
 	    {
@@ -463,10 +467,10 @@ makeSpritePoly(GU_Detail *gdp, const GU_Detail *src, UT_IntArray &points,
             //       largest.
 	    dest_attribs.entries(parms.myAttribMap->myDIndex+1);
 
-	    for (vray_SpriteAttribMap *map = parms.myAttribMap; map; map = map->myNext)
+	    for (auto map = parms.myAttribMap; map; map = map->myNext)
 	    {
 		const GA_Attribute *atr = map->mySourceAttrib;
-                UT_ASSERT(map->myDIndex < dest_attribs.entries());
+		UT_ASSERT(map->myDIndex < dest_attribs.entries());
 		dest_attribs(map->myDIndex) = gdp->addPrimAttrib(atr);
 		UT_ASSERT(dest_attribs(map->myDIndex) != NULL);
 	    }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015
+ * Copyright (c) 2017
  *	Side Effects Software Inc.  All rights reserved.
  *
  * Redistribution and use of Houdini Development Kit samples in source and
@@ -92,7 +92,8 @@ protected:
     virtual bool		 evalVariableValue(UT_String &v, int i,
 						   int thread)
 				 {
-				     return evalVariableValue(v, i, thread);
+				     return CHOP_Node::evalVariableValue(
+								v, i, thread);
 				 }
 
 private:

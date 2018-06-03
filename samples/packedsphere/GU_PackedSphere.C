@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015
+ * Copyright (c) 2017
  *	Side Effects Software Inc.  All rights reserved.
  *
  * Redistribution and use of Houdini Development Kit samples in source and
@@ -31,6 +31,8 @@
 #include <GU/GU_PrimPacked.h>
 #include <UT/UT_DSOVersion.h>
 #include <UT/UT_MemoryCounter.h>
+#include <FS/UT_DSO.h>
+#include "GT_GEOPackedSphere.C"
 
 using namespace HDK_Sample;
 
@@ -130,7 +132,16 @@ GU_PackedSphere::install(GA_PrimitiveFactory *gafactory)
 
     theFactory = new SphereFactory();
     GU_PrimPacked::registerPacked(gafactory, theFactory);
-    theTypeId = theFactory->typeDef().getId();
+    if (theFactory->isRegistered())
+    {
+	theTypeId = theFactory->typeDef().getId();
+	GT_GEOPackedSphere::registerPrimitive(theTypeId);
+    }
+    else
+    {
+	fprintf(stderr, "Unable to register packed sphere from %s\n",
+		UT_DSO::getRunningFile());
+    }
 }
 
 void

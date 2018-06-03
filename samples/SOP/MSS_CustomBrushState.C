@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015
+ * Copyright (c) 2017
  *	Side Effects Software Inc.  All rights reserved.
  *
  * Redistribution and use of Houdini Development Kit samples in source and
@@ -331,7 +331,7 @@ MSS_CustomBrushState::updateBrush(int x, int y)
     getViewportItransform(myBrushCursorXform);
 
     // determine the direction the camera a facing
-    UT_Vector3 forward = rowVecMult(UT_Vector4(0, 0, -1, 0), myBrushCursorXform);
+    UT_Vector3 forward = rowVecMult3(UT_Vector3(0, 0, -1), myBrushCursorXform);
 
     // position the brush under the pointer and one unit away from the camera
     UT_Vector3 rayorig, dir;

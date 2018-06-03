@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015
+ * Copyright (c) 2017
  *	Side Effects Software Inc.  All rights reserved.
  *
  * Redistribution and use of Houdini Development Kit samples in source and
@@ -299,7 +299,7 @@ DM_ObjectPathRenderHook::rebuildPathGeometry(RE_Render *r,
 	UT_Vector4D p(0.0, 0.0, 0.0, 1.0);
 	UT_Vector4D pn(0.0, normal_scale, 0.0, 1.0);
 	UT_Vector3F p3, pn3;
-	context.setFrame(long(fr));
+	context.setFrame(fr);
 
 	obj->getLocalToWorldTransform(context, trans);
 
